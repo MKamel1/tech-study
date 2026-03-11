@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Agenda - 28 Week Gantt Chart</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 20px;
+            background: #fafafa;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        .chart-container {
+            overflow-x: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        svg {
+            display: block;
+        }
+        .bar-rect {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .bar-rect:hover {
+            opacity: 0.8;
+            stroke: #333;
+            stroke-width: 2;
+        }
+        .bar-text {
+            pointer-events: none;
+            font-family: inherit;
+        }
+        .filter-buttons {
+            margin-bottom: 15px;
+        }
+        .filter-buttons button {
+            padding: 8px 16px;
+            margin-right: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .filter-buttons button:hover {
+            background: #f0f0f0;
+        }
+        .filter-buttons button.active {
+            background: #333;
+            color: white;
+            border-color: #333;
+        }
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .stats h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Senior Applied Scientist Study Agenda</h1>
+    <p>28 Weeks | 560 Hours | 20h/week</p>
+    
+    <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background: #4CAF50"></div> Learn</div>
+        <div class="legend-item"><div class="legend-color" style="background: #2196F3"></div> Review</div>
+        <div class="legend-item"><div class="legend-color" style="background: #FF9800"></div> Project</div>
+        <div class="legend-item"><div class="legend-color" style="background: #9C27B0"></div> Mock Interview</div>
+        <div class="legend-item"><div class="legend-color" style="background: #607D8B"></div> DSA (Daily)</div>
+    </div>
+    
+    <div class="filter-buttons">
+        <button class="active" onclick="filterBars('all')">All</button>
+        <button onclick="filterBars('Learn')">Learn</button>
+        <button onclick="filterBars('Review')">Review</button>
+        <button onclick="filterBars('Project')">Projects</button>
+        <button onclick="filterBars('Mock')">Mocks</button>
+    </div>
+    
+    <div class="chart-container">
+        <svg width="1280" height="1920">
+            <!-- Phase headers -->
+            
+        <rect x="250" y="5" width="70" height="20" fill="#f0f0f0" stroke="#ccc" rx="3"/>
+        <text x="285.0" y="19" text-anchor="middle" font-size="9" fill="#555">Phase 0: Time Series</text>
+        <rect x="320" y="5" width="175" height="20" fill="#f0f0f0" stroke="#ccc" rx="3"/>
+        <text x="407.5" y="19" text-anchor="middle" font-size="9" fill="#555">Phase 1: Stats + ML</text>
+        <rect x="495" y="5" width="210" height="20" fill="#f0f0f0" stroke="#ccc" rx="3"/>
+        <text x="600.0" y="19" text-anchor="middle" font-size="9" fill="#555">Phase 2: Causal</text>
+        <rect x="705" y="5" width="175" height="20" fill="#f0f0f0" stroke="#ccc" rx="3"/>
+        <text x="792.5" y="19" text-anchor="middle" font-size="9" fill="#555">Phase 3: DL + Project 1</text>
+        <rect x="880" y="5" width="175" height="20" fill="#f0f0f0" stroke="#ccc" rx="3"/>
+        <text x="967.5" y="19" text-anchor="middle" font-size="9" fill="#555">Phase 4: GenAI + Project 2</text>
+        <rect x="1055" y="5" width="175" height="20" fill="#f0f0f0" stroke="#ccc" rx="3"/>
+        <text x="1142.5" y="19" text-anchor="middle" font-size="9" fill="#555">Phase 5: Interview Sprint</text>
+            
+            <!-- Week headers -->
+            
+        <text x="267.5" y="40" text-anchor="middle" font-size="10" fill="#666">W1</text>
+        <line x1="250" y1="50" x2="250" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="302.5" y="40" text-anchor="middle" font-size="10" fill="#666">W2</text>
+        <line x1="285" y1="50" x2="285" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="337.5" y="40" text-anchor="middle" font-size="10" fill="#666">W3</text>
+        <line x1="320" y1="50" x2="320" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="372.5" y="40" text-anchor="middle" font-size="10" fill="#666">W4</text>
+        <line x1="355" y1="50" x2="355" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="407.5" y="40" text-anchor="middle" font-size="10" fill="#666">W5</text>
+        <line x1="390" y1="50" x2="390" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="442.5" y="40" text-anchor="middle" font-size="10" fill="#666">W6</text>
+        <line x1="425" y1="50" x2="425" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="477.5" y="40" text-anchor="middle" font-size="10" fill="#666">W7</text>
+        <line x1="460" y1="50" x2="460" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="512.5" y="40" text-anchor="middle" font-size="10" fill="#666">W8</text>
+        <line x1="495" y1="50" x2="495" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="547.5" y="40" text-anchor="middle" font-size="10" fill="#666">W9</text>
+        <line x1="530" y1="50" x2="530" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="582.5" y="40" text-anchor="middle" font-size="10" fill="#666">W10</text>
+        <line x1="565" y1="50" x2="565" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="617.5" y="40" text-anchor="middle" font-size="10" fill="#666">W11</text>
+        <line x1="600" y1="50" x2="600" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="652.5" y="40" text-anchor="middle" font-size="10" fill="#666">W12</text>
+        <line x1="635" y1="50" x2="635" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="687.5" y="40" text-anchor="middle" font-size="10" fill="#666">W13</text>
+        <line x1="670" y1="50" x2="670" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="722.5" y="40" text-anchor="middle" font-size="10" fill="#666">W14</text>
+        <line x1="705" y1="50" x2="705" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="757.5" y="40" text-anchor="middle" font-size="10" fill="#666">W15</text>
+        <line x1="740" y1="50" x2="740" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="792.5" y="40" text-anchor="middle" font-size="10" fill="#666">W16</text>
+        <line x1="775" y1="50" x2="775" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="827.5" y="40" text-anchor="middle" font-size="10" fill="#666">W17</text>
+        <line x1="810" y1="50" x2="810" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="862.5" y="40" text-anchor="middle" font-size="10" fill="#666">W18</text>
+        <line x1="845" y1="50" x2="845" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="897.5" y="40" text-anchor="middle" font-size="10" fill="#666">W19</text>
+        <line x1="880" y1="50" x2="880" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="932.5" y="40" text-anchor="middle" font-size="10" fill="#666">W20</text>
+        <line x1="915" y1="50" x2="915" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="967.5" y="40" text-anchor="middle" font-size="10" fill="#666">W21</text>
+        <line x1="950" y1="50" x2="950" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="1002.5" y="40" text-anchor="middle" font-size="10" fill="#666">W22</text>
+        <line x1="985" y1="50" x2="985" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="1037.5" y="40" text-anchor="middle" font-size="10" fill="#666">W23</text>
+        <line x1="1020" y1="50" x2="1020" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="1072.5" y="40" text-anchor="middle" font-size="10" fill="#666">W24</text>
+        <line x1="1055" y1="50" x2="1055" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="1107.5" y="40" text-anchor="middle" font-size="10" fill="#666">W25</text>
+        <line x1="1090" y1="50" x2="1090" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="1142.5" y="40" text-anchor="middle" font-size="10" fill="#666">W26</text>
+        <line x1="1125" y1="50" x2="1125" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="1177.5" y="40" text-anchor="middle" font-size="10" fill="#666">W27</text>
+        <line x1="1160" y1="50" x2="1160" y2="1890" stroke="#eee" stroke-width="1"/>
+        <text x="1212.5" y="40" text-anchor="middle" font-size="10" fill="#666">W28</text>
+        <line x1="1195" y1="50" x2="1195" y2="1890" stroke="#eee" stroke-width="1"/>
+            
+            <!-- Section labels -->
+            
+        <text x="10" y="78" font-weight="bold" font-size="12" fill="#333">1. Causal</text>
+        <text x="10" y="333" font-weight="bold" font-size="12" fill="#333">2. Stats</text>
+        <text x="10" y="518" font-weight="bold" font-size="12" fill="#333">3. ML/DL</text>
+        <text x="10" y="843" font-weight="bold" font-size="12" fill="#333">4. Time Series</text>
+        <text x="10" y="993" font-weight="bold" font-size="12" fill="#333">5. NLP/GenAI</text>
+        <text x="10" y="1143" font-weight="bold" font-size="12" fill="#333">6. System Design</text>
+        <text x="10" y="1258" font-weight="bold" font-size="12" fill="#333">7. Coding</text>
+        <text x="10" y="1373" font-weight="bold" font-size="12" fill="#333">8. Product Sense</text>
+        <text x="10" y="1418" font-weight="bold" font-size="12" fill="#333">9. Breadth</text>
+        <text x="10" y="1533" font-weight="bold" font-size="12" fill="#333">Project</text>
+        <text x="10" y="1613" font-weight="bold" font-size="12" fill="#333">Mock Interview</text>
+        <text x="10" y="1798" font-weight="bold" font-size="12" fill="#333">DSA Practice</text>
+        <text x="10" y="1843" font-weight="bold" font-size="12" fill="#333">All Sections</text>
+            
+            <!-- Bars -->
+            
+        <g class="bar" data-section="1. Causal" data-activity="Learn">
+            <rect x="495" y="60" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="500" y="78" class="bar-text" fill="white" font-size="11">
+                1.1 Foundations
+            </text>
+        </g>
+        <g class="bar" data-section="1. Causal" data-activity="Learn">
+            <rect x="530" y="95" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="535" y="113" class="bar-text" fill="white" font-size="11">
+                1.2.1-1.2.3 A/B, DiD, RDD
+            </text>
+        </g>
+        <g class="bar" data-section="1. Causal" data-activity="Learn">
+            <rect x="565" y="130" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="570" y="148" class="bar-text" fill="white" font-size="11">
+                1.2.4-1.2.5 IV, Synthetic
+            </text>
+        </g>
+        <g class="bar" data-section="1. Causal" data-activity="Learn">
+            <rect x="600" y="165" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="605" y="183" class="bar-text" fill="white" font-size="11">
+                1.2.6-1.2.7 PSM, Bandits
+            </text>
+        </g>
+        <g class="bar" data-section="1. Causal" data-activity="Learn">
+            <rect x="635" y="200" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="640" y="218" class="bar-text" fill="white" font-size="11">
+                1.3 Modern Causal ML
+            </text>
+        </g>
+        <g class="bar" data-section="1. Causal" data-activity="Learn">
+            <rect x="670" y="235" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="675" y="253" class="bar-text" fill="white" font-size="11">
+                1.4-1.5 Libraries + Sensitivit...
+            </text>
+        </g>
+        <g class="bar" data-section="1. Causal" data-activity="Learn">
+            <rect x="845" y="270" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="850" y="288" class="bar-text" fill="white" font-size="11">
+                1.6 Applications
+            </text>
+        </g>
+        <g class="bar" data-section="2. Stats" data-activity="Learn">
+            <rect x="320" y="315" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="325" y="333" class="bar-text" fill="white" font-size="11">
+                2.1 Probability Basics
+            </text>
+        </g>
+        <g class="bar" data-section="2. Stats" data-activity="Learn">
+            <rect x="355" y="350" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="360" y="368" class="bar-text" fill="white" font-size="11">
+                2.2 Distributions
+            </text>
+        </g>
+        <g class="bar" data-section="2. Stats" data-activity="Learn">
+            <rect x="355" y="385" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="360" y="403" class="bar-text" fill="white" font-size="11">
+                2.3 Statistical Inference
+            </text>
+        </g>
+        <g class="bar" data-section="2. Stats" data-activity="Learn">
+            <rect x="390" y="420" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="395" y="438" class="bar-text" fill="white" font-size="11">
+                2.4 Advanced Theory
+            </text>
+        </g>
+        <g class="bar" data-section="2. Stats" data-activity="Review">
+            <rect x="460" y="455" width="31" height="28" 
+                  fill="#2196F3" rx="4" class="bar-rect"/>
+            <text x="465" y="473" class="bar-text" fill="white" font-size="11">
+                Stats + ML Review
+            </text>
+        </g>
+        <g class="bar" data-section="3. ML/DL" data-activity="Learn">
+            <rect x="355" y="500" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="360" y="518" class="bar-text" fill="white" font-size="11">
+                3.1.1-3.1.2 Core + Linear
+            </text>
+        </g>
+        <g class="bar" data-section="3. ML/DL" data-activity="Learn">
+            <rect x="390" y="535" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="395" y="553" class="bar-text" fill="white" font-size="11">
+                3.1.3-3.1.4 Trees + Eval
+            </text>
+        </g>
+        <g class="bar" data-section="3. ML/DL" data-activity="Learn">
+            <rect x="425" y="570" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="430" y="588" class="bar-text" fill="white" font-size="11">
+                3.1.5-3.1.6 SVM + Imbalanced
+            </text>
+        </g>
+        <g class="bar" data-section="3. ML/DL" data-activity="Review">
+            <rect x="460" y="605" width="31" height="28" 
+                  fill="#2196F3" rx="4" class="bar-rect"/>
+            <text x="465" y="623" class="bar-text" fill="white" font-size="11">
+                Stats + ML Review
+            </text>
+        </g>
+        <g class="bar" data-section="3. ML/DL" data-activity="Learn">
+            <rect x="705" y="640" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="710" y="658" class="bar-text" fill="white" font-size="11">
+                3.3.1-3.3.2 NN Fundamentals
+            </text>
+        </g>
+        <g class="bar" data-section="3. ML/DL" data-activity="Learn">
+            <rect x="740" y="675" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="745" y="693" class="bar-text" fill="white" font-size="11">
+                3.3.3-3.3.4 Architectures, Tra...
+            </text>
+        </g>
+        <g class="bar" data-section="3. ML/DL" data-activity="Learn">
+            <rect x="775" y="710" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="780" y="728" class="bar-text" fill="white" font-size="11">
+                3.2 Unsupervised
+            </text>
+        </g>
+        <g class="bar" data-section="3. ML/DL" data-activity="Learn">
+            <rect x="775" y="745" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="780" y="763" class="bar-text" fill="white" font-size="11">
+                3.4 Feature Engineering
+            </text>
+        </g>
+        <g class="bar" data-section="3. ML/DL" data-activity="Learn">
+            <rect x="810" y="780" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="815" y="798" class="bar-text" fill="white" font-size="11">
+                3.5 Tuning + Interpretability
+            </text>
+        </g>
+        <g class="bar" data-section="4. Time Series" data-activity="Learn">
+            <rect x="250" y="825" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="255" y="843" class="bar-text" fill="white" font-size="11">
+                4.3 Modern Methods
+            </text>
+        </g>
+        <g class="bar" data-section="4. Time Series" data-activity="Learn">
+            <rect x="250" y="860" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="255" y="878" class="bar-text" fill="white" font-size="11">
+                4.4 Practical Considerations
+            </text>
+        </g>
+        <g class="bar" data-section="4. Time Series" data-activity="Learn">
+            <rect x="285" y="895" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="290" y="913" class="bar-text" fill="white" font-size="11">
+                4.5 Uncertainty Quantification
+            </text>
+        </g>
+        <g class="bar" data-section="4. Time Series" data-activity="Review">
+            <rect x="285" y="930" width="31" height="28" 
+                  fill="#2196F3" rx="4" class="bar-rect"/>
+            <text x="290" y="948" class="bar-text" fill="white" font-size="11">
+                4.1-4.2 Review
+            </text>
+        </g>
+        <g class="bar" data-section="5. NLP/GenAI" data-activity="Learn">
+            <rect x="880" y="975" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="885" y="993" class="bar-text" fill="white" font-size="11">
+                5.1 NLP Fundamentals
+            </text>
+        </g>
+        <g class="bar" data-section="5. NLP/GenAI" data-activity="Learn">
+            <rect x="880" y="1010" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="885" y="1028" class="bar-text" fill="white" font-size="11">
+                5.2 Transformers & LLMs
+            </text>
+        </g>
+        <g class="bar" data-section="5. NLP/GenAI" data-activity="Learn">
+            <rect x="915" y="1045" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="920" y="1063" class="bar-text" fill="white" font-size="11">
+                5.3 RAG
+            </text>
+        </g>
+        <g class="bar" data-section="5. NLP/GenAI" data-activity="Learn">
+            <rect x="950" y="1080" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="955" y="1098" class="bar-text" fill="white" font-size="11">
+                5.4-5.5 Agentic AI, Causal+AI
+            </text>
+        </g>
+        <g class="bar" data-section="6. System Design" data-activity="Learn">
+            <rect x="1055" y="1125" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="1060" y="1143" class="bar-text" fill="white" font-size="11">
+                6.1 Design Patterns
+            </text>
+        </g>
+        <g class="bar" data-section="6. System Design" data-activity="Learn">
+            <rect x="1055" y="1160" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="1060" y="1178" class="bar-text" fill="white" font-size="11">
+                6.2 Key Components
+            </text>
+        </g>
+        <g class="bar" data-section="6. System Design" data-activity="Learn">
+            <rect x="1090" y="1195" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="1095" y="1213" class="bar-text" fill="white" font-size="11">
+                6.3 Case Studies
+            </text>
+        </g>
+        <g class="bar" data-section="7. Coding" data-activity="Learn">
+            <rect x="1020" y="1240" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="1025" y="1258" class="bar-text" fill="white" font-size="11">
+                7.3 Best Practices
+            </text>
+        </g>
+        <g class="bar" data-section="7. Coding" data-activity="Learn">
+            <rect x="1125" y="1275" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="1130" y="1293" class="bar-text" fill="white" font-size="11">
+                7.1 Core Patterns
+            </text>
+        </g>
+        <g class="bar" data-section="7. Coding" data-activity="Learn">
+            <rect x="1125" y="1310" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="1130" y="1328" class="bar-text" fill="white" font-size="11">
+                7.2 Python for ML
+            </text>
+        </g>
+        <g class="bar" data-section="8. Product Sense" data-activity="Learn">
+            <rect x="1160" y="1355" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="1165" y="1373" class="bar-text" fill="white" font-size="11">
+                8.1-8.3 Full Section
+            </text>
+        </g>
+        <g class="bar" data-section="9. Breadth" data-activity="Learn">
+            <rect x="425" y="1400" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="430" y="1418" class="bar-text" fill="white" font-size="11">
+                9.3 Survival Analysis
+            </text>
+        </g>
+        <g class="bar" data-section="9. Breadth" data-activity="Learn">
+            <rect x="985" y="1435" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="990" y="1453" class="bar-text" fill="white" font-size="11">
+                9.1 HMM
+            </text>
+        </g>
+        <g class="bar" data-section="9. Breadth" data-activity="Learn">
+            <rect x="985" y="1470" width="31" height="28" 
+                  fill="#4CAF50" rx="4" class="bar-rect"/>
+            <text x="990" y="1488" class="bar-text" fill="white" font-size="11">
+                9.2 RL Basics
+            </text>
+        </g>
+        <g class="bar" data-section="Project" data-activity="Project">
+            <rect x="740" y="1515" width="136" height="28" 
+                  fill="#FF9800" rx="4" class="bar-rect"/>
+            <text x="745" y="1533" class="bar-text" fill="white" font-size="11">
+                Project 1: Causal Uplift
+            </text>
+        </g>
+        <g class="bar" data-section="Project" data-activity="Project">
+            <rect x="950" y="1550" width="101" height="28" 
+                  fill="#FF9800" rx="4" class="bar-rect"/>
+            <text x="955" y="1568" class="bar-text" fill="white" font-size="11">
+                Project 2: TBD
+            </text>
+        </g>
+        <g class="bar" data-section="Mock Interview" data-activity="Mock">
+            <rect x="460" y="1595" width="31" height="28" 
+                  fill="#9C27B0" rx="4" class="bar-rect"/>
+            <text x="465" y="1613" class="bar-text" fill="white" font-size="11">
+                #1 Stats + ML
+            </text>
+        </g>
+        <g class="bar" data-section="Mock Interview" data-activity="Mock">
+            <rect x="670" y="1630" width="31" height="28" 
+                  fill="#9C27B0" rx="4" class="bar-rect"/>
+            <text x="675" y="1648" class="bar-text" fill="white" font-size="11">
+                #2 Causal Deep Dive
+            </text>
+        </g>
+        <g class="bar" data-section="Mock Interview" data-activity="Mock">
+            <rect x="845" y="1665" width="31" height="28" 
+                  fill="#9C27B0" rx="4" class="bar-rect"/>
+            <text x="850" y="1683" class="bar-text" fill="white" font-size="11">
+                #3 Causal + ML
+            </text>
+        </g>
+        <g class="bar" data-section="Mock Interview" data-activity="Mock">
+            <rect x="1020" y="1700" width="31" height="28" 
+                  fill="#9C27B0" rx="4" class="bar-rect"/>
+            <text x="1025" y="1718" class="bar-text" fill="white" font-size="11">
+                #4 GenAI + System
+            </text>
+        </g>
+        <g class="bar" data-section="Mock Interview" data-activity="Mock">
+            <rect x="1055" y="1735" width="171" height="28" 
+                  fill="#9C27B0" rx="4" class="bar-rect"/>
+            <text x="1060" y="1753" class="bar-text" fill="white" font-size="11">
+                #5-8 Weekly Mocks
+            </text>
+        </g>
+        <g class="bar" data-section="DSA Practice" data-activity="DSA">
+            <rect x="250" y="1780" width="976" height="28" 
+                  fill="#607D8B" rx="4" class="bar-rect"/>
+            <text x="255" y="1798" class="bar-text" fill="white" font-size="11">
+                Daily 30min
+            </text>
+        </g>
+        <g class="bar" data-section="All Sections" data-activity="Review">
+            <rect x="1195" y="1825" width="31" height="28" 
+                  fill="#2196F3" rx="4" class="bar-rect"/>
+            <text x="1200" y="1843" class="bar-text" fill="white" font-size="11">
+                Final Review
+            </text>
+        </g>
+        </svg>
+    </div>
+    
+    <div class="stats">
+        <h3>Summary Statistics</h3>
+        <p><strong>Primary Spike:</strong> Causal Inference (~100h) - Weeks 8-13, 18</p>
+        <p><strong>Secondary Spike:</strong> NLP/GenAI (~40h) - Weeks 19-21</p>
+        <p><strong>Projects:</strong> 2 portfolio projects (Weeks 15-18, 21-23)</p>
+        <p><strong>Mock Interviews:</strong> 7+ scheduled (Weeks 7, 13, 18, 23, 24-28)</p>
+    </div>
+    
+    <script>
+        function filterBars(activity) {
+            const bars = document.querySelectorAll('.bar');
+            const buttons = document.querySelectorAll('.filter-buttons button');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            bars.forEach(bar => {
+                if (activity === 'all' || bar.dataset.activity === activity) {
+                    bar.style.opacity = '1';
+                } else {
+                    bar.style.opacity = '0.15';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
