@@ -1,7 +1,9 @@
 ---
+title: "2.2 Distributions"
+---
 
 > [!IMPORTANT]
-> ## 📖 How to Study This File (Read This First)
+> ## How to Study This File (Read This First)
 >
 > **Why distributions matter**: Every ML model either *assumes* a distribution (linear regression assumes Normal errors; logistic regression assumes Bernoulli outputs; Poisson regression assumes count data) or *outputs* one (a softmax layer outputs a Categorical). Every loss function is a negative log-likelihood of some distribution. Every hypothesis test is built on Chi-squared, t, or F. If you don't know distributions, you don't know *why* any of it works — you just know API calls.
 >

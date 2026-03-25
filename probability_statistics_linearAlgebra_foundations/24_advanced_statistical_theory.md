@@ -1,4 +1,6 @@
 ---
+title: "2.4 Advanced Statistical Theory"
+---
 
 > [!IMPORTANT]
 > ## How to Study This File (Read This First)

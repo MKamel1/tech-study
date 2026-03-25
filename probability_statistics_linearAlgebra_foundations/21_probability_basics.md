@@ -1,4 +1,6 @@
 ---
+title: "2.1 Probability Basics"
+---
 # Document Outline
 - [Executive Summary](#executive-summary)
 - [2.1.1 Foundations of Probability](#211-foundations-of-probability-h)

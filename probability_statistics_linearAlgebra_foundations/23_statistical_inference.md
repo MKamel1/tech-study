@@ -1,7 +1,9 @@
 ---
+title: "2.3 Statistical Inference"
+---
 
 > [!IMPORTANT]
-> ## 📖 How to Study This File (Read This First)
+> ## How to Study This File (Read This First)
 >
 > **Why statistical inference matters**: Distributions (Section 2.2) are the vocabulary. Inference is the *grammar* — how you go from a sample of data to conclusions about the world. Every A/B test you'll design, every causal estimate you'll interpret, every regression coefficient you'll report requires this machinery. At Amazon, Meta, and Cruise, AS candidates are routinely asked to set up hypothesis tests on the fly, explain p-values correctly, design experiments with proper power, and diagnose broken regressions. This is core interview territory.
 >
