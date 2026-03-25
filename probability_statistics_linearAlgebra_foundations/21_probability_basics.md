@@ -912,6 +912,14 @@ bayesian_updating_demo()
 
 $$\hat{\theta}_{MLE} = \arg\max_\theta \; P(\text{data} \mid \theta) = \arg\max_\theta \; \prod_{i=1}^n P(x_i \mid \theta)$$
 
+> [!IMPORTANT] 
+> **The i.i.d. Assumption**
+> Did you notice how the joint probability of the entire dataset $P(x_1, x_2, \dots x_n \mid \theta)$ suddenly turned into a multiplication of individual probabilities $\prod_{i=1}^n P(x_i \mid \theta)$? 
+> 
+> Mathematically, $P(A \cap B) = P(A) \cdot P(B)$ **only if $A$ and $B$ are independent**. By writing the likelihood as a product, we are explicitly assuming our data points are structurally "Independent and Identically Distributed" (i.i.d). 
+> 
+> **What this means in practice:** If this assumption is violated (e.g., in Time Series data where yesterday's temperature heavily influences today's temperature), standard MLE will fail to capture the true dynamics. This is why time series models require specialized forecasting architectures (like ARIMA) that explicitly model that dependence via the Chain Rule instead of a naive product!
+
 #### The Log-Likelihood Trick
 
 Products are numerically unstable and hard to differentiate. Taking the log converts products to sums:
@@ -929,6 +937,9 @@ $$\hat{\theta}_{MLE} = \arg\max_\theta \; \sum_{i=1}^n \log P(x_i \mid \theta)$$
 > >
 > > **2. Cross-Entropy Loss (Agenda 2.7.2):**
 > > Minimizing Cross-Entropy is mathematically identical to maximizing the Log-Likelihood of a multinomial/categorical distribution. This is why we use Log-Loss for classification rather than Mean Squared Error.
+> >
+> > **3. Mathematical Tractability for Gradients:**
+> > To find the maximum likelihood algebraically (or via Gradient Descent), we need to take the derivative and set it to zero. Taking the derivative of a massive product of $N$ terms requires applying the Product Rule $N-1$ times, resulting in a horrifyingly complex algebraic mess. Because the derivative of a sum is just the sum of the derivatives ($\frac{d}{dx}[A + B] = \frac{d}{dx}A + \frac{d}{dx}B$), the log transforms an impossible differential calculus problem into trivial, independent calculations for each data point!
 
 ---
 
@@ -1140,6 +1151,19 @@ map_vs_mle_demo()
 | **MAP** | $\arg\max_\theta P(\theta \mid D)$ | Single point estimate (regularized) | Moderate data, want regularization, have prior info |
 | **Full Bayesian** | Full $P(\theta \mid D)$ | Entire distribution over $\theta$ | Need uncertainty quantification, small data, critical decisions |
 
+> [!NOTE]
+> **What is the practical difference?**
+>
+> **MAP (Maximum A Posteriori)** produces a **single, specific number** (a "point estimate"). 
+> - *Example:* You want to predict if a coin is biased. You flip it 3 times and get 3 Heads. Your prior was that coins are fair ($p=0.5$). MAP balances the data and your prior, and spits out a single answer: "I estimate $p=0.75$."
+> - **Pros:** Extremely fast to compute. You just take the derivative, set to zero, and get your answer. This allows you to train massive neural networks via Gradient Descent.
+> - **Cons:** It gives you zero information about how *confident* it is in that $0.75$ number. 
+> 
+> **Full Bayesian Inference** does NOT output a single number. It outputs a **full probability distribution** (a PDF curve).
+> - *Example:* Instead of saying "$p=0.75$", it returns an entire Beta distribution curve: "The most likely value is 0.75, but because I've only seen 3 flips, the true value could easily be anywhere between 0.4 and 0.95."
+> - **Pros:** This is the Holy Grail of Machine Learning. It gives you perfect **Uncertainty Quantification**. You know exactly how much you don't know. 
+> - **Cons:** Computing the denominator of Bayes' Theorem (the integral over all possible values of $\theta$) is usually mathematically impossible for complex models like Neural Networks. You have to rely on expensive approximation algorithms like MCMC (Markov Chain Monte Carlo), making it too slow for most massive datasets.
+
 ```mermaid
 flowchart TD
     Q["How to estimate parameters?"]
@@ -1192,6 +1216,16 @@ $$P(X \geq a) \leq \frac{E[X]}{a}$$
 **Intuition**: If the average is small, the probability of being very large must also be small.
 
 **Example**: If the average income is \$50,000, then at most 1% of people earn $\geq$ \$5,000,000 (since $50000/5000000 = 0.01$).
+
+> [!NOTE]
+> **Why can't the right side be smaller?**
+> Because there exists a "worst-case scenario" distribution where this inequality becomes an exact equality ($=$). 
+> 
+> Imagine a town where the average income is \$50,000. We want to know the maximum possible percentage of people who earn exactly \$5,000,000 or more. 
+> - **The worst-case distribution** is one where 99% of the town makes exactly \$0, and the remaining 1% makes exactly \$5,000,000.
+> - Let's calculate the average of that town: $E[X] = (0.99 \times 0) + (0.01 \times 5,000,000) = 50,000$.
+> 
+> In this extreme scenario, exactly 1% of people make $\geq$ \$5,000,000. If Markov's Inequality gave us a tighter bound (e.g., claiming "at most 0.5% make that much"), it would be mathematically disproven by this specific town! Because we know absolutely nothing about the variance or shape of the distribution—only its mean—Markov's Inequality must provide a bound conservative enough to accommodate this extreme worst-case scenario.
 
 > [!NOTE]
 > **Very loose bound** — its strength is that it requires almost no assumptions (just non-negativity). It's the foundation for tighter bounds below.
@@ -1249,16 +1283,48 @@ flowchart LR
 > > **What does this mean in practice?**
 > >
 > > **1. Variational Inference & EM (Agenda 3.2.3):**
-> > We often want to maximize the log-likelihood of data, $\log P(x)$, but the true distribution is intractable to compute because it requires integrating over latent variables $z$. By using Jensen's inequality (specifically, pushing the `log` inside the expectation), we can derive a tractable lower bound called the **Evidence Lower Bound (ELBO)**. Maximizing the ELBO (which is easy) guarantees we push up the true log-likelihood (which is hard). This is the foundation of the Expectation-Maximization algorithm and Variational Autoencoders (VAEs).
+> > In generative ML, calculating the exact probability of our data ($\log P(x)$) is mathematically impossible ("intractable"). 
+> > 
+> > *Why?* Imagine trying to calculate the probability of generating a specific image of a face. To do that perfectly, the math requires you to add up the probabilities of *every single possible combination* of hidden rules ("latent variables"): every possible hair color, mixed with every possible eye size, mixed with every possible lighting angle. There are trillions of combinations. The math simply crashes.
+> > 
+> > **The Jensen's Trick:** We can rewrite $\log P(x)$ as the "Log of an Expectation" (Log of an Average). Because $\log$ is a *concave* curve, Jensen's Inequality tells us that **Log of the Average $\ge$ Average of the Log**. 
+> > 
+> > By moving the $\log$ *inside* the expectation, we create the **Evidence Lower Bound (ELBO)**. 
+> > - **True Log-Likelihood** = Log of Average (Math is impossible)
+> > - **ELBO** = Average of Log (Math is easy!)
+> > 
+> > Because True $\ge$ ELBO, we simply tell our neural network to maximize the ELBO. Jensen's Inequality mathematically guarantees this will push the true log-likelihood up with it!
 > >
 > > **2. KL Divergence (Agenda 2.7.3):**
-> > Jensen's inequality is used to mathematically prove that KL Divergence is always $\ge 0$, which means that the cross-entropy between two distributions is always greater than or equal to the entropy of the true distribution.
+> > Why is the KL "distance" between two distributions, $P$ and $Q$, mathematically guaranteed to never be negative? 
+> > 
+> > The definition of KL Divergence relies on the function $-\log(x)$, which is a *convex* curve (bows downwards). Jensen's Inequality dictates that for convex curves, the **Average of the Function $\ge$ Function of the Average**. 
+> > 
+> > If you calculate the right side ("Function of the Average"), the math simplifies perfectly to $-\log(1)$, which is exactly **0**. Therefore, the KL Divergence (the left side) must be $\ge 0$.
 
 | Application | How Jensen's Is Used |
 |-------------|---------------------|
 | **KL divergence $\geq 0$** | $\text{KL}(p\|q) = E_p[\log(p/q)] \geq \log(E_p[p/q]) = \log(1) = 0$ (concavity of log) |
 | **EM algorithm** | The ELBO (Evidence Lower Bound) uses Jensen's to lower-bound the log-marginal likelihood |
 | **Variance is non-negative** | $E[X^2] \geq (E[X])^2$ is Jensen's applied to $f(x) = x^2$ (convex) |
+
+> [!TIP]
+> **Function of Average vs. Average of Function**
+> Let's look at the function $f(x) = x^2$ (a convex function).
+> Imagine you have two numbers: 2 and 8. The average of those numbers ($E[X]$) is **5**.
+> 
+> 1. **Function of the Average ($f(E[X])$):**
+>    First take the average (which is 5), then apply the function (square it). 
+>    $5^2 = \mathbf{25}$
+>
+> 2. **Average of the Function ($E[f(X)]$):**
+>    First apply the function to both numbers ($2^2 = 4$, and $8^2 = 64$). *Then* take the average of those results.
+>    $(4 + 64) / 2 = \mathbf{34}$
+> 
+> Because the curve bows downward (convex), drawing a straight line between the two points on the curve (the average of the function, 34) will *always* sit higher than the curve itself at that midpoint (the function of the average, 25). That's Jensen's Inequality! 
+
+![Jensen's Inequality Intuition](./jensens_intuition.png)
+
 | **Log-likelihood bounds** | Variational inference uses Jensen's to create tractable optimization objectives |
 
 <details>
