@@ -96,16 +96,16 @@ $$P(X = x) = p^x (1-p)^{1-x}, \quad x \in \{0, 1\}$$
 > [!NOTE]
 > **Variance intuition**: Variance $p(1-p)$ is maximized at $p=0.5$ and equals zero at $p=0$ or $p=1$. This is why A/B tests with 50/50 conversion rates need the largest sample sizes — you have maximum uncertainty about the outcome.
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Binary Classification Output (Agenda 3.1):**
-> > Every binary classifier (logistic regression, neural network with sigmoid output) models the target as a Bernoulli random variable. The model predicts $\hat{p} = P(Y=1 \mid X)$, and the loss function (binary cross-entropy) is derived directly from the Bernoulli likelihood:
-> > $$\mathcal{L} = -[y \log(\hat{p}) + (1-y) \log(1-\hat{p})]$$
-> > This is literally the negative log of the Bernoulli PMF! Minimizing cross-entropy = maximizing Bernoulli likelihood.
-> >
-> > **2. Dropout Regularization (Agenda 3.3.2):**
-> > Each neuron in dropout is independently "kept" with probability $p$ — a Bernoulli trial. The dropout mask for a layer of $n$ neurons is a vector of $n$ independent Bernoulli random variables.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Binary Classification Output (Agenda 3.1):**
+> Every binary classifier (logistic regression, neural network with sigmoid output) models the target as a Bernoulli random variable. The model predicts $\hat{p} = P(Y=1 \mid X)$, and the loss function (binary cross-entropy) is derived directly from the Bernoulli likelihood:
+> $$\mathcal{L} = -[y \log(\hat{p}) + (1-y) \log(1-\hat{p})]$$
+> This is literally the negative log of the Bernoulli PMF! Minimizing cross-entropy = maximizing Bernoulli likelihood.
+>
+> **2. Dropout Regularization (Agenda 3.3.2):**
+> Each neuron in dropout is independently "kept" with probability $p$ — a Bernoulli trial. The dropout mask for a layer of $n$ neurons is a vector of $n$ independent Bernoulli random variables.
 
 ---
 
@@ -156,14 +156,14 @@ print(f"Normal approx: mu={mu:.1f}, sigma={sigma:.2f}")   # mu=50, sigma=6.89
 
 </details>
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. A/B Testing Sample Size (Agenda 1.2.1):**
-> > The Binomial distribution is the exact model for "how many users convert out of $n$ visitors." The Normal approximation to the Binomial (valid when $np \geq 5$ and $n(1-p) \geq 5$) is what makes z-test based A/B testing possible. When you calculate the standard error $\text{SE} = \sqrt{p(1-p)/n}$, you are using the Binomial variance $np(1-p)$ divided by $n^2$.
-> >
-> > **2. Binomial Likelihood and Beta-Binomial Conjugacy (Section 2.1.4):**
-> > In Bayesian A/B testing, the Binomial is the *likelihood* and the Beta distribution is the conjugate *prior*. After observing $k$ successes in $n$ trials, the posterior is $\text{Beta}(\alpha + k, \beta + n - k)$ — a closed-form update.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. A/B Testing Sample Size (Agenda 1.2.1):**
+> The Binomial distribution is the exact model for "how many users convert out of $n$ visitors." The Normal approximation to the Binomial (valid when $np \geq 5$ and $n(1-p) \geq 5$) is what makes z-test based A/B testing possible. When you calculate the standard error $\text{SE} = \sqrt{p(1-p)/n}$, you are using the Binomial variance $np(1-p)$ divided by $n^2$.
+>
+> **2. Binomial Likelihood and Beta-Binomial Conjugacy (Section 2.1.4):**
+> In Bayesian A/B testing, the Binomial is the *likelihood* and the Beta distribution is the conjugate *prior*. After observing $k$ successes in $n$ trials, the posterior is $\text{Beta}(\alpha + k, \beta + n - k)$ — a closed-form update.
 
 ---
 
@@ -215,17 +215,17 @@ print(f"P(X>5)  = {1 - stats.poisson.cdf(5, lam):.4f}")   # 0.0839
 
 </details>
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Poisson Regression / GLMs (Agenda 2.3.4):**
-> > When modeling count data (page views, clicks, defect counts), Poisson regression uses a log link: $\log(\lambda) = X\beta$, ensuring non-negative predictions. This is a Generalized Linear Model (GLM) with the Poisson as the response distribution.
-> >
-> > **2. Poisson Loss for Count Prediction:**
-> > Some gradient boosting implementations (XGBoost, LightGBM) offer a Poisson loss objective specifically for count data. This is the negative log-likelihood of the Poisson distribution.
-> >
-> > **3. Rare Event Modeling:**
-> > Fraud detection, equipment failures, and medical adverse events are often modeled with Poisson processes because the events are rare and roughly independent.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Poisson Regression / GLMs (Agenda 2.3.4):**
+> When modeling count data (page views, clicks, defect counts), Poisson regression uses a log link: $\log(\lambda) = X\beta$, ensuring non-negative predictions. This is a Generalized Linear Model (GLM) with the Poisson as the response distribution.
+>
+> **2. Poisson Loss for Count Prediction:**
+> Some gradient boosting implementations (XGBoost, LightGBM) offer a Poisson loss objective specifically for count data. This is the negative log-likelihood of the Poisson distribution.
+>
+> **3. Rare Event Modeling:**
+> Fraud detection, equipment failures, and medical adverse events are often modeled with Poisson processes because the events are rare and roughly independent.
 
 ---
 
@@ -256,14 +256,14 @@ $$P(X > s + t \mid X > s) = P(X > t)$$
 > [!TIP]
 > **The Geometric distribution is the ONLY discrete distribution with the memoryless property.** Its continuous counterpart is the Exponential distribution (Section 2.2.2), which is the only continuous memoryless distribution.
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Expected Exploration Rounds (Agenda 9.2):**
-> > In reinforcement learning, if an agent has probability $p$ of succeeding at a task per attempt, the expected number of attempts until first success follows a Geometric distribution: $E[\text{attempts}] = 1/p$. This relates to the exploration-exploitation tradeoff.
-> >
-> > **2. Coupon Collector / Coverage Problems:**
-> > "How many samples do I need to see every class at least once?" is a sum of Geometric random variables — directly relevant to class-balanced sampling strategies.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Expected Exploration Rounds (Agenda 9.2):**
+> In reinforcement learning, if an agent has probability $p$ of succeeding at a task per attempt, the expected number of attempts until first success follows a Geometric distribution: $E[\text{attempts}] = 1/p$. This relates to the exploration-exploitation tradeoff.
+>
+> **2. Coupon Collector / Coverage Problems:**
+> "How many samples do I need to see every class at least once?" is a sum of Geometric random variables — directly relevant to class-balanced sampling strategies.
 
 ---
 
@@ -282,6 +282,9 @@ $$P(X = k) = \binom{k-1}{r-1} p^r (1-p)^{k-r}, \quad k = r, r+1, r+2, \ldots$$
 | **Mean** | $E[X] = r/p$ |
 | **Variance** | $\text{Var}(X) = r(1-p)/p^2$ |
 
+> [!WARNING]
+> **Scipy convention mismatch**: This guide defines $X$ = number of **trials** until $r$ successes (support starts at $r$). Scipy's `stats.nbinom(n, p)` defines $X$ = number of **failures** before $r$ successes (support starts at 0). To convert: `stats.nbinom.pmf(k - r, r, p)` gives the probability of needing $k$ total trials. The visualization code in this file uses this offset — don't be confused when `x_nb - r` appears.
+
 > [!NOTE]
 > **When Poisson fails, use Negative Binomial.** Recall that Poisson constrains mean = variance. In practice, count data is almost always **overdispersed** (variance > mean). The Negative Binomial adds an extra parameter to decouple mean and variance, making it far more flexible for real-world count data.
 >
@@ -290,11 +293,11 @@ $$P(X = k) = \binom{k-1}{r-1} p^r (1-p)^{k-r}, \quad k = r, r+1, r+2, \ldots$$
 > | Poisson | $\text{Var} = \mu$ | Counts are well-behaved (rare) |
 > | Negative Binomial | $\text{Var} > \mu$ | Counts are overdispersed (common) |
 
-> > [!NOTE]
-> > **Fundamental ML Connection**
-> >
-> > **Overdispersed Count Models (Agenda 2.3.4):**
-> > In practice (retail demand, click counts, hospital admissions), the Negative Binomial is often preferred over Poisson for regression because real count data almost always exhibits overdispersion. Many forecasting libraries (e.g., Amazon's DeepAR) use the Negative Binomial as their output distribution for exactly this reason.
+> [!NOTE]
+> **Fundamental ML Connection**
+>
+> **Overdispersed Count Models (Agenda 2.3.4):**
+> In practice (retail demand, click counts, hospital admissions), the Negative Binomial is often preferred over Poisson for regression because real count data almost always exhibits overdispersion. Many forecasting libraries (e.g., Amazon's DeepAR) use the Negative Binomial as their output distribution for exactly this reason.
 
 ---
 
@@ -321,15 +324,15 @@ $$P(X_1 = x_1, \ldots, X_K = x_K) = \frac{n!}{x_1! x_2! \cdots x_K!} \prod_{k=1}
 - $K = 2$: Multinomial reduces to **Binomial**
 - $n = 1$: Single trial gives a **Categorical** distribution (Goodfellow calls this "Multinoulli")
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Multi-class Classification / Softmax (Agenda 3.1):**
-> > A softmax layer outputs a probability vector $\mathbf{p} = (p_1, \ldots, p_K)$ where $\sum p_k = 1$. This parameterizes a Categorical distribution (Multinomial with $n=1$): $P(Y=k \mid X) = p_k$. The categorical cross-entropy loss is the negative log-likelihood of this distribution:
-> > $$\mathcal{L} = -\sum_{k=1}^K y_k \log(p_k)$$
-> >
-> > **2. Topic Models / LDA (Agenda 3.2.3):**
-> > In Latent Dirichlet Allocation, each document's word distribution is Multinomial, with the probability vector drawn from a Dirichlet prior (the multivariate generalization of the Beta distribution).
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Multi-class Classification / Softmax (Agenda 3.1):**
+> A softmax layer outputs a probability vector $\mathbf{p} = (p_1, \ldots, p_K)$ where $\sum p_k = 1$. This parameterizes a Categorical distribution (Multinomial with $n=1$): $P(Y=k \mid X) = p_k$. The categorical cross-entropy loss is the negative log-likelihood of this distribution:
+> $$\mathcal{L} = -\sum_{k=1}^K y_k \log(p_k)$$
+>
+> **2. Topic Models / LDA (Agenda 3.2.3):**
+> In Latent Dirichlet Allocation, each document's word distribution is Multinomial, with the probability vector drawn from a Dirichlet prior (the multivariate generalization of the Beta distribution).
 
 ---
 
@@ -650,17 +653,17 @@ print(f"After:  mean={Z.mean():.4f}, std={Z.std():.4f}")
 
 </details>
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Weight Initialization (Agenda 3.3.1):**
-> > Neural network weights are typically initialized from $\mathcal{N}(0, \sigma^2)$ where $\sigma$ depends on fan-in/fan-out (Xavier: $\sigma^2 = 2/(n_{in} + n_{out})$, He: $\sigma^2 = 2/n_{in}$). The Normal choice ensures weights start symmetrically around zero with controlled variance.
-> >
-> > **2. Gaussian Noise and VAEs (Agenda 5.2):**
-> > Variational Autoencoders (VAEs) assume the latent space follows $\mathcal{N}(0, I)$. The "reparameterization trick" $z = \mu + \sigma \cdot \epsilon$ where $\epsilon \sim \mathcal{N}(0,1)$ enables backpropagation through stochastic layers.
-> >
-> > **3. MSE Loss = Normal Likelihood (Agenda 3.1):**
-> > Minimizing Mean Squared Error is equivalent to maximizing the log-likelihood of a Normal distribution: $\text{MSE} = -\log \mathcal{N}(y \mid f(x), \sigma^2) + \text{const}$. This means when you use MSE loss, you are implicitly assuming your errors are Normally distributed.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Weight Initialization (Agenda 3.3.1):**
+> Neural network weights are typically initialized from $\mathcal{N}(0, \sigma^2)$ where $\sigma$ depends on fan-in/fan-out (Xavier: $\sigma^2 = 2/(n_{in} + n_{out})$, He: $\sigma^2 = 2/n_{in}$). The Normal choice ensures weights start symmetrically around zero with controlled variance.
+>
+> **2. Gaussian Noise and VAEs (Agenda 5.2):**
+> Variational Autoencoders (VAEs) assume the latent space follows $\mathcal{N}(0, I)$. The "reparameterization trick" $z = \mu + \sigma \cdot \epsilon$ where $\epsilon \sim \mathcal{N}(0,1)$ enables backpropagation through stochastic layers.
+>
+> **3. MSE Loss = Normal Likelihood (Agenda 3.1):**
+> Minimizing Mean Squared Error is equivalent to maximizing the log-likelihood of a Normal distribution: $\text{MSE} = -\log \mathcal{N}(y \mid f(x), \sigma^2) + \text{const}$. This means when you use MSE loss, you are implicitly assuming your errors are Normally distributed.
 
 ---
 
@@ -690,14 +693,14 @@ $$f(x) = \lambda e^{-\lambda x}, \quad x \geq 0$$
 > | Parameter $\lambda$ = rate | Parameter $\lambda$ = same rate |
 > | Mean = $\lambda$ events | Mean = $1/\lambda$ time |
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Survival Analysis (Agenda 9.3):**
-> > The Exponential distribution is the simplest survival model: the "hazard rate" is constant $h(t) = \lambda$. This is the baseline for more flexible models like Weibull or Cox proportional hazards. When they say "the event has no memory," this is the Exponential assumption.
-> >
-> > **2. Laplace Distribution and L1 Regularization (Section 2.1.5):**
-> > Goodfellow (3.9.4) discusses the Laplace distribution, which is a "double Exponential" (Exponential on both sides of 0). Using a Laplace prior in MAP estimation gives L1 (Lasso) regularization — producing sparse solutions.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Survival Analysis (Agenda 9.3):**
+> The Exponential distribution is the simplest survival model: the "hazard rate" is constant $h(t) = \lambda$. This is the baseline for more flexible models like Weibull or Cox proportional hazards. When they say "the event has no memory," this is the Exponential assumption.
+>
+> **2. Laplace Distribution and L1 Regularization (Section 2.1.5):**
+> Goodfellow (3.9.4) discusses the Laplace distribution, which is a "double Exponential" (Exponential on both sides of 0). Using a Laplace prior in MAP estimation gives L1 (Lasso) regularization — producing sparse solutions.
 
 ---
 
@@ -718,14 +721,14 @@ $$f(x) = \frac{1}{b - a}, \quad a \leq x \leq b$$
 | **Mean** | $E[X] = (a + b) / 2$ |
 | **Variance** | $\text{Var}(X) = (b - a)^2 / 12$ |
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Random Initialization and Random Search:**
-> > Uniform distributions are used for random hyperparameter search (sampling learning rates uniformly in log-space), random seeds, and random projections.
-> >
-> > **2. Uniform Prior = MLE (Section 2.1.5):**
-> > A Uniform prior $P(\theta) = \text{const}$ contributes nothing to the MAP objective, so MAP with a Uniform prior reduces to MLE. This is the formal justification for "MLE assumes no prior knowledge."
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Random Initialization and Random Search:**
+> Uniform distributions are used for random hyperparameter search (sampling learning rates uniformly in log-space), random seeds, and random projections.
+>
+> **2. Uniform Prior = MLE (Section 2.1.5):**
+> A Uniform prior $P(\theta) = \text{const}$ contributes nothing to the MAP objective, so MAP with a Uniform prior reduces to MLE. This is the formal justification for "MLE assumes no prior knowledge."
 
 ---
 
@@ -746,11 +749,11 @@ $$f(x) = \frac{1}{x\sigma\sqrt{2\pi}} \exp\left(-\frac{(\ln x - \mu)^2}{2\sigma^
 > [!NOTE]
 > **When to suspect Log-Normal**: If your data is strictly positive and right-skewed — and especially if a *multiplicative* process generates it (e.g., stock returns, income, city sizes, time-to-failure) — try taking the log. If $\log(X)$ looks Normal, your data is Log-Normal.
 
-> > [!NOTE]
-> > **Fundamental ML Connection**
-> >
-> > **Log-transforming Targets in Regression:**
-> > When predicting right-skewed targets (house prices, salaries, response times), applying $\log(y)$ before fitting often improves model performance because the transformed target is closer to Normal — satisfying the implicit MSE/Normal assumption. Remember to exponentiate predictions back and that $E[e^Z] \neq e^{E[Z]}$ (Jensen's inequality from Section 2.1.6).
+> [!NOTE]
+> **Fundamental ML Connection**
+>
+> **Log-transforming Targets in Regression:**
+> When predicting right-skewed targets (house prices, salaries, response times), applying $\log(y)$ before fitting often improves model performance because the transformed target is closer to Normal — satisfying the implicit MSE/Normal assumption. Remember to exponentiate predictions back and that $E[e^Z] \neq e^{E[Z]}$ (Jensen's inequality from Section 2.1.6).
 
 ---
 
@@ -780,22 +783,22 @@ The Beta distribution is incredibly flexible — it can be uniform, U-shaped, sk
 |----------|---------|-------|----------------|
 | 1 | 1 | Uniform (flat) | No prior information |
 | 0.5 | 0.5 | U-shaped (edges) | Extreme values likely |
-| 2 | 5 | Left-skewed | Low values more likely |
-| 5 | 2 | Right-skewed | High values more likely |
+| 2 | 5 | Right-skewed (mass near 0, tail toward 1) | Low values more likely |
+| 5 | 2 | Left-skewed (mass near 1, tail toward 0) | High values more likely |
 | 5 | 5 | Symmetric bell | Centered around 0.5 |
 | 50 | 50 | Tight bell | Strong belief around 0.5 |
 
 > [!TIP]
 > **Mental model**: Think of $\alpha$ as "pseudo-counts of successes" and $\beta$ as "pseudo-counts of failures." $\text{Beta}(1, 1)$ = "I've seen nothing" (Uniform). $\text{Beta}(10, 2)$ = "I've seen 10 successes and 2 failures" (skewed right, probably $p \approx 0.83$).
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Bayesian A/B Testing / Thompson Sampling (Agenda 1.2.1):**
-> > The Beta distribution is the conjugate prior for the Bernoulli/Binomial likelihood. Start with $\text{Beta}(\alpha_0, \beta_0)$ as your prior belief about a conversion rate. After observing $s$ successes and $f$ failures, the posterior is $\text{Beta}(\alpha_0 + s, \beta_0 + f)$. Thompson Sampling draws a sample from each arm's posterior Beta and picks the highest — a simple yet optimal exploration strategy.
-> >
-> > **2. Beta-Binomial Conjugacy (Section 2.1.4):**
-> > This is the most important conjugacy pair in applied Bayesian inference. It enables closed-form posterior updates without MCMC, which is why Bayesian A/B testing is computationally cheap.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Bayesian A/B Testing / Thompson Sampling (Agenda 1.2.1):**
+> The Beta distribution is the conjugate prior for the Bernoulli/Binomial likelihood. Start with $\text{Beta}(\alpha_0, \beta_0)$ as your prior belief about a conversion rate. After observing $s$ successes and $f$ failures, the posterior is $\text{Beta}(\alpha_0 + s, \beta_0 + f)$. Thompson Sampling draws a sample from each arm's posterior Beta and picks the highest — a simple yet optimal exploration strategy.
+>
+> **2. Beta-Binomial Conjugacy (Section 2.1.4):**
+> This is the most important conjugacy pair in applied Bayesian inference. It enables closed-form posterior updates without MCMC, which is why Bayesian A/B testing is computationally cheap.
 
 ![Beta Distribution Gallery](./beta_distribution_gallery.png)
 
@@ -863,11 +866,14 @@ $$f(x) = \frac{\beta^\alpha}{\Gamma(\alpha)} x^{\alpha-1} e^{-\beta x}, \quad x 
 - $\text{Gamma}(n/2, 1/2)$ = $\chi^2(n)$ (Chi-squared with $n$ degrees of freedom)
 - Sum of $n$ i.i.d. $\text{Exponential}(\beta)$ = $\text{Gamma}(n, \beta)$
 
-> > [!NOTE]
-> > **Fundamental ML Connection**
-> >
-> > **Bayesian Prior for Rate Parameters:**
-> > The Gamma distribution is the conjugate prior for the Poisson rate $\lambda$ and the precision (inverse variance) of a Normal. When you see "Gamma prior" in Bayesian modeling, it's placing a belief on a positive-valued parameter.
+> [!WARNING]
+> **Scipy convention**: This guide uses the **rate** parameterization $\text{Gamma}(\alpha, \beta)$ where $\beta$ is the rate. Scipy uses the **shape/scale** parameterization: `stats.gamma(a=alpha, scale=1/beta)`. Always pass `scale=1/beta` — not `beta` directly. Forgetting this is a common source of bugs.
+
+> [!NOTE]
+> **Fundamental ML Connection**
+>
+> **Bayesian Prior for Rate Parameters:**
+> The Gamma distribution is the conjugate prior for the Poisson rate $\lambda$ and the precision (inverse variance) of a Normal. When you see "Gamma prior" in Bayesian modeling, it's placing a belief on a positive-valued parameter.
 
 ---
 
@@ -892,17 +898,17 @@ $$X = \sum_{i=1}^k Z_i^2 \sim \chi^2(k)$$
 > [!NOTE]
 > **Degrees of freedom intuition**: The parameter $k$ counts how many independent "pieces of information" contribute to the sum. When fitting a model with $p$ parameters from $n$ data points, the residual sum of squares (after dividing by $\sigma^2$) follows $\chi^2(n-p)$. That's why we divide by $n-1$ (not $n$) for sample variance — we "used up" 1 degree of freedom estimating the mean.
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Chi-squared Test of Independence (Agenda 2.3.3):**
-> > Tests whether two categorical features are independent. The test statistic $\sum \frac{(O - E)^2}{E}$ follows $\chi^2$ under $H_0$. Used for feature selection in categorical data.
-> >
-> > **2. Goodness-of-Fit Testing:**
-> > Tests whether observed counts match a hypothesized distribution. Same $\chi^2$ statistic, different application.
-> >
-> > **3. Connection to Sample Variance:**
-> > $(n-1)s^2/\sigma^2 \sim \chi^2(n-1)$ — this is why confidence intervals for variance use the Chi-squared distribution.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Chi-squared Test of Independence (Agenda 2.3.3):**
+> Tests whether two categorical features are independent. The test statistic $\sum \frac{(O - E)^2}{E}$ follows $\chi^2$ under $H_0$. Used for feature selection in categorical data.
+>
+> **2. Goodness-of-Fit Testing:**
+> Tests whether observed counts match a hypothesized distribution. Same $\chi^2$ statistic, different application.
+>
+> **3. Connection to Sample Variance:**
+> $(n-1)s^2/\sigma^2 \sim \chi^2(n-1)$ — this is why confidence intervals for variance use the Chi-squared distribution.
 
 ---
 
@@ -933,14 +939,14 @@ $$T = \frac{Z}{\sqrt{V/k}} \sim t(k)$$
 > | Small sample, unknown $\sigma$ | t-test (t-distribution) | Extra uncertainty from estimating $\sigma$ adds heavier tails |
 > | Any sample, unknown $\sigma$ | t-test (safe choice) | Always valid; reduces to Z-test for large $n$ |
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Regression Coefficient Testing (Agenda 2.3.4):**
-> > In OLS regression, each coefficient's test statistic $t = \hat{\beta}/\text{SE}(\hat{\beta})$ follows a t-distribution under $H_0: \beta = 0$. This is how p-values for regression coefficients are computed.
-> >
-> > **2. Robust Loss Functions:**
-> > The t-distribution's heavy tails make it more robust to outliers than the Normal. Some robust regression methods assume t-distributed errors instead of Normal errors, downweighting outliers automatically.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Regression Coefficient Testing (Agenda 2.3.4):**
+> In OLS regression, each coefficient's test statistic $t = \hat{\beta}/\text{SE}(\hat{\beta})$ follows a t-distribution under $H_0: \beta = 0$. This is how p-values for regression coefficients are computed.
+>
+> **2. Robust Loss Functions:**
+> The t-distribution's heavy tails make it more robust to outliers than the Normal. Some robust regression methods assume t-distributed errors instead of Normal errors, downweighting outliers automatically.
 
 ---
 
@@ -961,14 +967,14 @@ $$F = \frac{U/d_1}{V/d_2} \sim F(d_1, d_2)$$
 | **Mean** | $E[X] = d_2/(d_2-2)$ (for $d_2 > 2$) |
 | **Key relationship** | If $T \sim t(k)$, then $T^2 \sim F(1, k)$ |
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. ANOVA F-test (Agenda 2.3.3):**
-> > The F-statistic compares between-group variance to within-group variance. A large F means the groups are significantly different. $F = \frac{\text{MS}_{\text{between}}}{\text{MS}_{\text{within}}}$.
-> >
-> > **2. Regression F-test (Agenda 2.3.4):**
-> > The overall F-test for regression asks: "Does this model explain significantly more variance than a mean-only model?" It tests whether *all* coefficients are jointly zero.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. ANOVA F-test (Agenda 2.3.3):**
+> The F-statistic compares between-group variance to within-group variance. A large F means the groups are significantly different. $F = \frac{\text{MS}_{\text{between}}}{\text{MS}_{\text{within}}}$.
+>
+> **2. Regression F-test (Agenda 2.3.4):**
+> The overall F-test for regression asks: "Does this model explain significantly more variance than a mean-only model?" It tests whether *all* coefficients are jointly zero.
 
 ---
 
@@ -1040,13 +1046,13 @@ where $\delta(x) = 0$ for $x \neq 0$ and $\int \delta(x)dx = 1$.
 | **Mean** | $E[X] = \mu$ |
 | **Variance** | $\text{Var}(X) = 0$ |
 
-> > [!NOTE]
-> > **Fundamental ML Connection** (Goodfellow 3.9.5)
-> >
-> > **Empirical Distribution:**
-> > Given data points $\{x_1, \ldots, x_n\}$, the empirical distribution is a mixture of Dirac deltas:
-> > $$\hat{p}(x) = \frac{1}{n} \sum_{i=1}^n \delta(x - x_i)$$
-> > This connects to MLE: the empirical distribution is the *maximum likelihood* distribution — it assigns equal probability to each observed data point and zero to everything else. When we compute sample means, we are computing expectations under this empirical distribution.
+> [!NOTE]
+> **Fundamental ML Connection** (Goodfellow 3.9.5)
+>
+> **Empirical Distribution:**
+> Given data points $\{x_1, \ldots, x_n\}$, the empirical distribution is a mixture of Dirac deltas:
+> $$\hat{p}(x) = \frac{1}{n} \sum_{i=1}^n \delta(x - x_i)$$
+> This connects to MLE: the empirical distribution is the *maximum likelihood* distribution — it assigns equal probability to each observed data point and zero to everything else. When we compute sample means, we are computing expectations under this empirical distribution.
 
 ---
 
@@ -1082,20 +1088,20 @@ $$d_M(\mathbf{x}, \boldsymbol{\mu}) = \sqrt{(\mathbf{x} - \boldsymbol{\mu})^T \b
 
 **Intuition**: Euclidean distance "adjusted" for correlations. A point that is 3 units away in a high-variance direction is less unusual than 3 units away in a low-variance direction. Mahalanobis distance accounts for this.
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. PCA (Agenda 3.2.2):**
-> > PCA finds the eigenvectors of the covariance matrix $\boldsymbol{\Sigma}$. The top-$k$ eigenvectors (directions of maximum variance) define the principal components. The eigenvalues tell you how much variance each component explains.
-> >
-> > **2. Gaussian Processes (Agenda 3.5):**
-> > A GP is an infinite-dimensional multivariate Normal. The kernel function $k(x_i, x_j)$ defines the covariance matrix entries $\Sigma_{ij}$. Conditioning on observed data gives posterior predictions that are also multivariate Normal — with closed-form mean and variance.
-> >
-> > **3. Linear Discriminant Analysis (LDA):**
-> > LDA assumes each class has a multivariate Normal distribution with different means but shared covariance. The decision boundary is where the class-conditional densities are equal — which turns out to be a linear function when $\boldsymbol{\Sigma}$ is shared.
-> >
-> > **4. Anomaly Detection:**
-> > Points with large Mahalanobis distance from the data center are outliers. This is more sophisticated than simple distance thresholds because it accounts for the correlation structure of the data.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. PCA (Agenda 3.2.2):**
+> PCA finds the eigenvectors of the covariance matrix $\boldsymbol{\Sigma}$. The top-$k$ eigenvectors (directions of maximum variance) define the principal components. The eigenvalues tell you how much variance each component explains.
+>
+> **2. Gaussian Processes (Agenda 3.5):**
+> A GP is an infinite-dimensional multivariate Normal. The kernel function $k(x_i, x_j)$ defines the covariance matrix entries $\Sigma_{ij}$. Conditioning on observed data gives posterior predictions that are also multivariate Normal — with closed-form mean and variance.
+>
+> **3. Linear Discriminant Analysis (LDA):**
+> LDA assumes each class has a multivariate Normal distribution with different means but shared covariance. The decision boundary is where the class-conditional densities are equal — which turns out to be a linear function when $\boldsymbol{\Sigma}$ is shared.
+>
+> **4. Anomaly Detection:**
+> Points with large Mahalanobis distance from the data center are outliers. This is more sophisticated than simple distance thresholds because it accounts for the correlation structure of the data.
 
 ![Multivariate Normal Contours](./multivariate_normal_contours.png)
 
@@ -1505,17 +1511,17 @@ plt.show()
 
 </details>
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. A/B Testing (Agenda 1.2.1):**
-> > CLT is literally why A/B testing works. Even though individual user behavior is binary (convert or not — a Bernoulli), the sample *proportion* $\hat{p} = \bar{X}$ is approximately Normal for large $n$: $\hat{p} \sim \mathcal{N}(p, p(1-p)/n)$. This lets us use z-tests to compare conversion rates.
-> >
-> > **2. Mini-batch SGD (Agenda 2.6.3):**
-> > The gradient computed from a mini-batch is an average of per-sample gradients. By CLT, this average is approximately Normal around the true full-batch gradient, with variance decreasing as $1/\text{batch\_size}$. This is why larger batches give more stable (but more expensive) gradient estimates.
-> >
-> > **3. Normal Approximation to Binomial:**
-> > For $n$ large, $\text{Binomial}(n, p) \approx \mathcal{N}(np, np(1-p))$. This is a direct consequence of CLT applied to a sum of Bernoullis.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. A/B Testing (Agenda 1.2.1):**
+> CLT is literally why A/B testing works. Even though individual user behavior is binary (convert or not — a Bernoulli), the sample *proportion* $\hat{p} = \bar{X}$ is approximately Normal for large $n$: $\hat{p} \sim \mathcal{N}(p, p(1-p)/n)$. This lets us use z-tests to compare conversion rates.
+>
+> **2. Mini-batch SGD (Agenda 2.6.3):**
+> The gradient computed from a mini-batch is an average of per-sample gradients. By CLT, this average is approximately Normal around the true full-batch gradient, with variance decreasing as $1/\text{batch\_size}$. This is why larger batches give more stable (but more expensive) gradient estimates.
+>
+> **3. Normal Approximation to Binomial:**
+> For $n$ large, $\text{Binomial}(n, p) \approx \mathcal{N}(np, np(1-p))$. This is a direct consequence of CLT applied to a sum of Bernoullis.
 
 ---
 
@@ -1586,14 +1592,14 @@ plt.show()
 
 </details>
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. Empirical Risk Minimization (Agenda 3.1):**
-> > LLN justifies why we can use the *training loss* (average loss over $n$ samples) as a proxy for the *true risk* (expected loss over the population). As $n \to \infty$, $\frac{1}{n}\sum L(f(x_i), y_i) \to E[L(f(X), Y)]$. Without LLN, ML would have no theoretical foundation.
-> >
-> > **2. Monte Carlo Methods (Agenda 2.4.3):**
-> > MCMC sampling works because of LLN: the average of samples from a distribution converges to the true expectation. More samples = better approximation.
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. Empirical Risk Minimization (Agenda 3.1):**
+> LLN justifies why we can use the *training loss* (average loss over $n$ samples) as a proxy for the *true risk* (expected loss over the population). As $n \to \infty$, $\frac{1}{n}\sum L(f(x_i), y_i) \to E[L(f(X), Y)]$. Without LLN, ML would have no theoretical foundation.
+>
+> **2. Monte Carlo Methods (Agenda 2.4.3):**
+> MCMC sampling works because of LLN: the average of samples from a distribution converges to the true expectation. More samples = better approximation.
 
 ---
 
@@ -1662,14 +1668,14 @@ print(f"They should be similar here since denominator is fixed (n)")
 
 </details>
 
-> > [!NOTE]
-> > **Fundamental ML Connections**
-> >
-> > **1. A/B Testing Ratio Metrics (Agenda 1.2.1):**
-> > Many business metrics are ratios: revenue per user, clicks per impression, time per session. The Delta Method provides the standard error needed for hypothesis testing on these metrics without resorting to expensive bootstrapping.
-> >
-> > **2. Variance Stabilizing Transformations:**
-> > The Delta Method can be used "in reverse" — find a transformation $g$ such that $\text{Var}(g(X))$ is approximately constant. For Poisson data, the square root transform $g(X) = \sqrt{X}$ stabilizes variance (since $\text{Var}(X) = \mu$ varies).
+> [!NOTE]
+> **Fundamental ML Connections**
+>
+> **1. A/B Testing Ratio Metrics (Agenda 1.2.1):**
+> Many business metrics are ratios: revenue per user, clicks per impression, time per session. The Delta Method provides the standard error needed for hypothesis testing on these metrics without resorting to expensive bootstrapping.
+>
+> **2. Variance Stabilizing Transformations:**
+> The Delta Method can be used "in reverse" — find a transformation $g$ such that $\text{Var}(g(X))$ is approximately constant. For Poisson data, the square root transform $g(X) = \sqrt{X}$ stabilizes variance (since $\text{Var}(X) = \mu$ varies).
 
 ---
 
