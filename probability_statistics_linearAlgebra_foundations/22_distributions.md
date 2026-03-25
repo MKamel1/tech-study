@@ -1,4 +1,54 @@
 ---
+
+> [!IMPORTANT]
+> ## 📖 How to Study This File (Read This First)
+>
+> **Why distributions matter**: Every ML model either *assumes* a distribution (linear regression assumes Normal errors; logistic regression assumes Bernoulli outputs; Poisson regression assumes count data) or *outputs* one (a softmax layer outputs a Categorical). Every loss function is a negative log-likelihood of some distribution. Every hypothesis test is built on Chi-squared, t, or F. If you don't know distributions, you don't know *why* any of it works — you just know API calls.
+>
+> **The payoff**: After this file, Section 2.3 (Statistical Inference) will make immediate sense because you'll already know *why* t-tests use the t-distribution, *why* ANOVA uses F, and *why* sample proportions are approximately Normal. Causal inference (Section 1.2) will click too — A/B test power analysis is just Binomial → Normal. Bayesian A/B testing (Thompson Sampling) is literally Beta distributions. The material here unlocks everything downstream.
+>
+> ---
+>
+> ### Suggested Study Plan (5–7 hours across 2 sessions)
+>
+> **Session 1 (~3h): Discrete + Decision Guides**
+> 1. Read [2.2.1 Discrete Distributions](#221-discrete-distributions-h) — one distribution at a time, don't rush
+> 2. After each: close the file and write from memory: *PMF, mean, variance, one real use case*
+> 3. Do the [Which Discrete Distribution?](#which-discrete-distribution-decision-guide) flowchart — trace through it with 3 real examples you invent
+> 4. Review the [Discrete Summary Table](#discrete-distributions-summary-table) — this is your recall test
+>
+> **Session 2 (~3–4h): Continuous + Theorems + Relationships**
+> 1. Read [2.2.2 Continuous Distributions](#222-continuous-distributions-h) — prioritize **Normal, Beta, Chi-squared, t** (all "Must know")
+> 2. Do the [Which Continuous Distribution?](#which-continuous-distribution-decision-guide) flowchart with your own examples
+> 3. Read [2.2.3 Key Theorems](#223-key-theorems-h) — CLT and LLN are [C] Critical; don't skip
+> 4. Skim [2.2.4 Distribution Relationships](#224-distribution-relationships-m) — the diagram is the key artifact; sketch it from memory after
+>
+> ---
+>
+> ### Priority Triage (if time is tight)
+>
+> | Must master before moving on | Can skim now, revisit later |
+> |---|---|
+> | Bernoulli, Binomial, Poisson, Normal | Geometric, Negative Binomial |
+> | Beta (Bayesian A/B testing) | Gamma, Dirac Delta |
+> | Chi-squared, t-distribution | F-distribution |
+> | CLT (full intuition + applications) | Exponential Family (2.2.4) |
+> | Multivariate Normal | Delta Method details |
+>
+> ---
+>
+> ### Active Recall Protocol (do this, don't just read)
+>
+> For each distribution, before turning the page, ask yourself:
+> - What does $X$ represent in the real world?
+> - What are the parameters and what do they control?
+> - What are the mean and variance? (derive, don't look up)
+> - When would I choose this over the alternatives?
+> - What ML concept directly uses this distribution?
+>
+> **Spaced repetition**: On Day 7, re-do the two flowcharts and the summary tables from memory. That's your retention check.
+
+---
 # Document Outline
 - [Executive Summary](#executive-summary)
 - [2.2.1 Discrete Distributions](#221-discrete-distributions-h)
@@ -81,6 +131,13 @@ Use this to read alongside your physical copy:
 
 The simplest possible distribution: a single trial with two outcomes.
 
+**Why learn this**: Every binary classifier you build (logistic regression, neural net with sigmoid) models its output as Bernoulli. When you compute binary cross-entropy loss, you're computing the negative log of this PMF. You'll use this every single day.
+
+**Used directly in**:
+- **Binary cross-entropy loss**: `torch.nn.BCELoss()` and `sklearn.metrics.log_loss()` are the negative log of this PMF — you compute Bernoulli likelihood every time you train a binary classifier
+- **Dropout implementation**: generating the dropout mask is literally `torch.bernoulli(torch.full(shape, p))` — each neuron is an independent Bernoulli trial
+- **Conversion rate modeling**: when estimating P(purchase | visit), you model each visit as Bernoulli(p) and use the variance formula p(1-p) to compute standard errors for A/B tests
+
 $$X \sim \text{Bernoulli}(p)$$
 
 $$P(X = x) = p^x (1-p)^{1-x}, \quad x \in \{0, 1\}$$
@@ -112,6 +169,13 @@ $$P(X = x) = p^x (1-p)^{1-x}, \quad x \in \{0, 1\}$$
 ### Binomial Distribution
 
 The number of successes in $n$ independent Bernoulli trials.
+
+**Why learn this**: When your PM asks "how many conversions should we expect from 10,000 visitors?" — that's Binomial. It's the exact distribution behind every A/B test sample size calculator you'll ever use.
+
+**Used directly in**:
+- **Exact binomial test**: `scipy.stats.binomtest(k, n, p)` — use when sample is too small for z-test approximation (e.g., testing 8 conversions out of 50 visitors)
+- **A/B test sample size calculators**: the SE formula $\sqrt{p(1-p)/n}$ comes from Binomial variance divided by $n^2$ — every sample size calculator you'll build starts here
+- **Sequential testing boundaries**: group sequential designs use the Binomial distribution to set stopping boundaries as data accumulates
 
 $$X \sim \text{Binomial}(n, p)$$
 
@@ -170,6 +234,14 @@ print(f"Normal approx: mu={mu:.1f}, sigma={sigma:.2f}")   # mu=50, sigma=6.89
 ### Poisson Distribution
 
 Models the count of events occurring in a fixed interval (time, area, volume) at a constant average rate.
+
+**Why learn this**: At Amazon, daily order counts per warehouse, server errors per hour, and customer support tickets per shift are all Poisson. When you build a demand forecasting model or anomaly detector for count data, Poisson (or its overdispersed cousin, Negative Binomial) is your starting point.
+
+**Used directly in**:
+- **Poisson regression**: `sm.GLM(y, X, family=sm.families.Poisson())` — the standard model for count data (daily orders, support tickets, bug reports)
+- **Poisson loss in gradient boosting**: `XGBRegressor(objective='count:poisson')` and `LGBMRegressor(objective='poisson')` — use when predicting counts instead of MSE
+- **Anomaly detection for counts**: if your server normally gets $\lambda=5$ errors/hour, observing 15 has p-value `1 - scipy.stats.poisson.cdf(14, 5)` $\approx 0.0003$ — that's an alert
+- **Rate comparison**: testing whether two Poisson rates differ (e.g., defect rates between factories) uses the conditional exact test or E-test
 
 $$X \sim \text{Poisson}(\lambda)$$
 
@@ -233,6 +305,12 @@ print(f"P(X>5)  = {1 - stats.poisson.cdf(5, lam):.4f}")   # 0.0839
 
 Models the number of trials until the **first** success.
 
+**Why learn this**: "How many ads does a user see before clicking?" "How many cold emails until a response?" These are Geometric. The memoryless property also shows up in system reliability interviews — understanding it separates you from candidates who only memorize formulas.
+
+**Used directly in**:
+- **Expected trials to first event**: "How many calls until a sale?" → $E[X] = 1/p$. If close rate is 5%, expect 20 calls. Used in sales funnel modeling and capacity planning
+- **Coupon collector problem**: "How many users must we sample to see all K segments?" is a sum of Geometric random variables — directly used in coverage analysis for data collection
+
 $$X \sim \text{Geometric}(p)$$
 
 $$P(X = k) = (1-p)^{k-1} p, \quad k = 1, 2, 3, \ldots$$
@@ -271,6 +349,13 @@ $$P(X > s + t \mid X > s) = P(X > t)$$
 
 Models the number of trials until the $r$-th success. Generalizes the Geometric ($r = 1$).
 
+**Why learn this**: Real count data (retail demand, hospital visits, insurance claims) is almost always overdispersed — variance exceeds the mean. Poisson can't handle this; Negative Binomial can. Amazon's DeepAR forecaster uses NB as its output distribution for exactly this reason.
+
+**Used directly in**:
+- **Overdispersed count regression**: `sm.GLM(y, X, family=sm.families.NegativeBinomial())` — use when Poisson fits poorly (variance >> mean), which is the norm in practice
+- **Demand forecasting output**: Amazon's DeepAR, Facebook's Prophet (with uncertainty), and many probabilistic forecasters use NB as their output distribution for intermittent/bursty demand
+- **Overdispersion test**: compare Poisson vs NB fit with a likelihood ratio test — if NB wins, your data is overdispersed and Poisson SEs are too narrow
+
 $$X \sim \text{NegBin}(r, p)$$
 
 $$P(X = k) = \binom{k-1}{r-1} p^r (1-p)^{k-r}, \quad k = r, r+1, r+2, \ldots$$
@@ -304,6 +389,13 @@ $$P(X = k) = \binom{k-1}{r-1} p^r (1-p)^{k-r}, \quad k = r, r+1, r+2, \ldots$$
 ### Multinomial Distribution
 
 ![Multinomial Distribution](./multinomial_distribution.png)
+
+**Why learn this**: Every multi-class classifier (softmax output) is a Categorical distribution — Multinomial with $n=1$. The categorical cross-entropy loss you minimize in PyTorch is the negative log of this PMF. If you've trained a classifier, you've used this.
+
+**Used directly in**:
+- **Softmax cross-entropy loss**: `torch.nn.CrossEntropyLoss()` is the negative log of the Categorical PMF — every multi-class classifier training loop computes this
+- **Topic modeling (LDA)**: each document's word distribution is Multinomial; `sklearn.decomposition.LatentDirichletAllocation` fits this model
+- **A/B/n testing**: when comparing K > 2 variants, the allocation across variants follows a Multinomial — used in multi-arm experiment design
 
 The multi-category extension of the Binomial. Models outcomes of $n$ trials, each falling into one of $K$ categories.
 
@@ -593,6 +685,15 @@ plt.show()
 
 The most important distribution in all of statistics and ML.
 
+**Why learn this**: MSE loss assumes Normal errors. Feature normalization assumes Normality. Confidence intervals, z-tests, and t-tests all rely on Normal approximations via CLT. Weight initialization in neural nets draws from Normals. This is genuinely the one distribution you cannot function without.
+
+**Used directly in**:
+- **MSE loss = Normal MLE**: minimizing MSE is equivalent to maximizing Normal log-likelihood — so every regression with MSE loss implicitly assumes Gaussian errors
+- **Gaussian Naive Bayes**: `sklearn.naive_bayes.GaussianNB()` — assumes features are Normally distributed per class; surprisingly effective baseline for continuous features
+- **Normality testing before parametric tests**: `scipy.stats.shapiro(data)` — run before t-tests on small samples; if it fails, switch to non-parametric alternatives
+- **Q-Q plots for model diagnostics**: `sm.qqplot(residuals, line='s')` — checking if regression residuals are Normal is a core diagnostic step
+- **Feature normalization**: `StandardScaler()` in sklearn transforms features to $\mathcal{N}(0,1)$ — required for SVMs, KNN, PCA, and neural networks
+
 $$X \sim \mathcal{N}(\mu, \sigma^2)$$
 
 $$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right)$$
@@ -671,6 +772,13 @@ print(f"After:  mean={Z.mean():.4f}, std={Z.std():.4f}")
 
 Models the **waiting time** between events in a Poisson process.
 
+**Why learn this**: "What's the expected time until the next server crash?" "How long until a customer churns?" These are Exponential. It's the simplest survival model and the continuous counterpart to Poisson — understanding the duality is a common interview question at Amazon and Netflix.
+
+**Used directly in**:
+- **Survival analysis baseline**: the simplest survival model assumes constant hazard $h(t) = \lambda$, which gives Exponential survival times — it's the null model you compare more complex models (Weibull, Cox PH) against
+- **Queueing theory / capacity planning**: inter-arrival times in an M/M/1 queue are Exponential — used to model customer wait times, server request spacing, and SLA analysis
+- **Time-to-event feature engineering**: for user churn models, "time since last login" often follows an Exponential — recognizing this guides your feature transformation choices
+
 $$X \sim \text{Exponential}(\lambda)$$
 
 $$f(x) = \lambda e^{-\lambda x}, \quad x \geq 0$$
@@ -710,6 +818,13 @@ $$f(x) = \lambda e^{-\lambda x}, \quad x \geq 0$$
 
 Equal probability across an interval — the distribution of "no information."
 
+**Why learn this**: Random hyperparameter search (learning rate, dropout rate) samples from Uniform. More importantly, Uniform prior = MLE — understanding this connects Bayesian and frequentist thinking, which is a hallmark of statistical maturity in interviews.
+
+**Used directly in**:
+- **Random hyperparameter search**: `scipy.stats.uniform(loc, scale)` as the distribution for `RandomizedSearchCV` — sampling learning rates, dropout rates, and regularization strengths
+- **Log-uniform for scale parameters**: learning rate search is typically `loguniform(1e-5, 1e-1)` — uniform in log-space, which is `scipy.stats.loguniform`
+- **Random initialization**: Xavier/He initialization draws from scaled Uniform — `torch.nn.init.kaiming_uniform_()`
+
 $$X \sim \text{Uniform}(a, b)$$
 
 $$f(x) = \frac{1}{b - a}, \quad a \leq x \leq b$$
@@ -736,6 +851,13 @@ $$f(x) = \frac{1}{b - a}, \quad a \leq x \leq b$$
 
 If $\log(X) \sim \mathcal{N}(\mu, \sigma^2)$, then $X \sim \text{Log-Normal}(\mu, \sigma^2)$.
 
+**Why learn this**: House prices, salaries, response latencies, and stock returns are all Log-Normal. When your regression target is right-skewed and positive, log-transforming it before fitting is standard practice — and understanding why (Jensen's inequality, back-transformation bias) separates good practitioners from great ones.
+
+**Used directly in**:
+- **Target transformation for regression**: `np.log1p(y)` before fitting, `np.expm1(pred)` after — standard practice for right-skewed targets (house prices, salaries, latencies). Remember: $E[e^Z] \neq e^{E[Z]}$ (apply smearing correction)
+- **Latency / SLA modeling**: P99 latency analysis often assumes Log-Normal — `scipy.stats.lognorm.ppf(0.99, s, scale)` gives the 99th percentile directly
+- **Financial modeling**: stock returns are approximately Log-Normal — if you model price paths (Monte Carlo simulation), this is the assumed distribution
+
 $$f(x) = \frac{1}{x\sigma\sqrt{2\pi}} \exp\left(-\frac{(\ln x - \mu)^2}{2\sigma^2}\right), \quad x > 0$$
 
 | Property | Value |
@@ -760,6 +882,13 @@ $$f(x) = \frac{1}{x\sigma\sqrt{2\pi}} \exp\left(-\frac{(\ln x - \mu)^2}{2\sigma^
 ### Beta Distribution
 
 The distribution over probabilities — values constrained to $[0, 1]$.
+
+**Why learn this**: This is the engine of Bayesian A/B testing and Thompson Sampling. At any company running experiments, you'll either use or be asked about Beta-Binomial conjugacy. If you understand Beta, you can explain why Bayesian A/B testing doesn't require fixed sample sizes — a massive practical advantage.
+
+**Used directly in**:
+- **Thompson Sampling implementation**: for each arm, sample from `np.random.beta(alpha + successes, beta + failures)` and pick the highest — this is the complete algorithm for Bayesian A/B testing
+- **Bayesian posterior updates**: `posterior = Beta(prior_alpha + k, prior_beta + n - k)` after observing k successes in n trials — no MCMC needed, closed-form
+- **Calibration analysis**: model predicted probabilities should follow a Beta-like distribution between 0 and 1; `scipy.stats.beta.fit(predicted_probs)` helps diagnose calibration issues
 
 $$X \sim \text{Beta}(\alpha, \beta)$$
 
@@ -850,6 +979,13 @@ plt.show()
 
 A flexible family for positive-valued random variables. Generalizes the Exponential.
 
+**Why learn this**: Gamma appears as the conjugate prior for Poisson rates (Bayesian demand modeling) and as the parent family that connects Exponential and Chi-squared. Knowing this relationship lets you navigate the testing distribution hierarchy fluently.
+
+**Used directly in**:
+- **Bayesian prior for rates**: in PyMC / Stan, `pm.Gamma('rate', alpha=2, beta=1)` is a standard weakly informative prior for Poisson rate parameters
+- **Insurance / claims modeling**: Gamma regression `sm.GLM(y, X, family=sm.families.Gamma())` for positive-valued, right-skewed outcomes (claim amounts, repair costs)
+- **Waiting time aggregation**: if you're modeling total time for $k$ sequential service steps (each Exponential), the sum is Gamma — used in operations research
+
 $$X \sim \text{Gamma}(\alpha, \beta)$$
 
 $$f(x) = \frac{\beta^\alpha}{\Gamma(\alpha)} x^{\alpha-1} e^{-\beta x}, \quad x > 0$$
@@ -880,6 +1016,13 @@ $$f(x) = \frac{\beta^\alpha}{\Gamma(\alpha)} x^{\alpha-1} e^{-\beta x}, \quad x 
 ### Chi-Squared Distribution
 
 The distribution of the sum of squared standard Normals. Foundation of hypothesis testing.
+
+**Why learn this**: Every time you run a chi-squared test of independence for feature selection, compute a goodness-of-fit test, or build a confidence interval for variance, you're using this. It's also the building block for the t and F distributions used in regression.
+
+**Used directly in**:
+- **Feature selection**: `sklearn.feature_selection.chi2(X, y)` scores categorical features by their chi-squared statistic against the target — a fast filter method before training
+- **Goodness-of-fit testing**: `scipy.stats.chisquare(observed, expected)` — tests if observed category counts match a hypothesized distribution (e.g., "is traffic evenly split across buckets?")
+- **Model calibration check**: Hosmer-Lemeshow test groups predictions into deciles and uses chi-squared to test if observed rates match predicted rates
 
 $$X \sim \chi^2(k)$$
 
@@ -915,6 +1058,13 @@ $$X = \sum_{i=1}^k Z_i^2 \sim \chi^2(k)$$
 ### t-Distribution
 
 Arises when estimating a Normal mean from a small sample with unknown variance. Heavier tails than Normal.
+
+**Why learn this**: Every regression p-value you've ever seen was computed from a t-distribution. Every small-sample A/B test uses t-tests. "When do you use t vs z?" is asked in nearly every AS interview. Heavy tails also make the t-distribution a basis for robust regression.
+
+**Used directly in**:
+- **Every regression p-value**: `model.pvalues` in statsmodels computes $t = \hat{\beta}/SE(\hat{\beta})$ and looks up the t-distribution — this is how you know if a coefficient is "significant"
+- **Small-sample A/B tests**: `scipy.stats.ttest_ind(treatment, control)` — the default two-sample comparison for continuous metrics
+- **Robust regression**: PyMC's `pm.StudentT` likelihood with low df gives a regression that automatically downweights outliers — used when Normal errors assumption is too fragile
 
 $$X \sim t(k)$$
 
@@ -953,6 +1103,13 @@ $$T = \frac{Z}{\sqrt{V/k}} \sim t(k)$$
 ### F-Distribution
 
 The ratio of two independent Chi-squared variables (divided by their degrees of freedom).
+
+**Why learn this**: "Does this model explain significantly more variance than a baseline?" — that's an F-test. ANOVA uses F. The overall regression significance test uses F. When comparing nested models (did adding these features help?), F is the answer.
+
+**Used directly in**:
+- **Overall model significance**: `model.f_pvalue` in statsmodels — tests whether your regression explains more variance than a mean-only model (should always check this)
+- **Nested model comparison**: "Did adding these 3 features significantly improve the model?" — F-test via `sm.stats.anova_lm(model_reduced, model_full)`
+- **ANOVA for A/B/n tests**: `scipy.stats.f_oneway(group_a, group_b, group_c)` — testing if any variant has a different mean
 
 $$X \sim F(d_1, d_2)$$
 
@@ -1034,6 +1191,12 @@ plt.show()
 
 </details>
 
+**Why learn this**: The Dirac delta formalizes the empirical distribution — the thing you actually compute when you take sample means. It's also how mixture models and kernel density estimation are built. Understanding it shows theoretical depth in interviews.
+
+**Used directly in**:
+- **Kernel Density Estimation (KDE)**: KDE smooths Dirac deltas with a kernel — `scipy.stats.gaussian_kde(data)` is literally replacing point masses with Gaussians to get a smooth density estimate
+- **Empirical CDF**: `statsmodels.distributions.ECDF(data)` constructs the step function from Dirac deltas — used for comparing distributions and the Kolmogorov-Smirnov test
+
 A "distribution" that puts all its mass at a single point. Not a distribution in the classical sense, but extremely useful.
 
 $$p(x) = \delta(x - \mu)$$
@@ -1059,6 +1222,14 @@ where $\delta(x) = 0$ for $x \neq 0$ and $\int \delta(x)dx = 1$.
 ### Multivariate Normal Distribution
 
 The multi-dimensional generalization of the Normal. The most important multivariate distribution.
+
+**Why learn this**: PCA finds the eigenvectors of the MVN covariance matrix. Gaussian Processes output MVN predictions. LDA assumes MVN class-conditionals. Mahalanobis distance (from MVN) is used for anomaly detection. If you work with multivariate data, you work with this.
+
+**Used directly in**:
+- **PCA**: `sklearn.decomposition.PCA` finds the eigenvectors of the sample covariance matrix — the principal components are the directions of maximum variance in the MVN
+- **Mahalanobis anomaly detection**: `scipy.spatial.distance.mahalanobis(x, mean, cov_inv)` — flag data points that are far from the center accounting for correlations; used in fraud detection and quality control
+- **Gaussian Processes**: `sklearn.gaussian_process.GaussianProcessRegressor` — predictions are MVN conditioned on training data, giving both point estimates and uncertainty bands
+- **Linear Discriminant Analysis**: `sklearn.discriminant_analysis.LinearDiscriminantAnalysis` assumes MVN per class with shared covariance — an interpretable classifier that's optimal under these assumptions
 
 $$\mathbf{X} \sim \mathcal{N}(\boldsymbol{\mu}, \boldsymbol{\Sigma})$$
 
@@ -1410,6 +1581,13 @@ plt.show()
 
 > The most important theorem in statistics.
 
+**Why learn this**: CLT is literally why A/B testing works. Individual user behavior is binary (Bernoulli), but the sample average is approximately Normal for large $n$ — which lets you compute p-values and confidence intervals. Without CLT, there is no hypothesis testing as we know it.
+
+**Used directly in**:
+- **Confidence interval construction**: every CI of the form $\bar{X} \pm z \cdot SE$ works because CLT guarantees $\bar{X}$ is approximately Normal — you use this every time you report an uncertainty estimate
+- **Normal approximation to Binomial**: for large $n$, `scipy.stats.norm.cdf()` replaces the slower `scipy.stats.binom.cdf()` — this is how A/B test p-values are computed in practice
+- **Mini-batch SGD theory**: the gradient from a mini-batch is an average of per-sample gradients → approximately Normal by CLT → justifies learning rate schedules and convergence guarantees
+
 **Statement**: Let $X_1, X_2, \ldots, X_n$ be i.i.d. random variables with mean $\mu$ and finite variance $\sigma^2$. Then as $n \to \infty$:
 
 $$\frac{\bar{X}_n - \mu}{\sigma / \sqrt{n}} \xrightarrow{d} \mathcal{N}(0, 1)$$
@@ -1527,6 +1705,13 @@ plt.show()
 
 ### Law of Large Numbers
 
+**Why learn this**: LLN justifies using training loss as a proxy for true risk. It's why Monte Carlo estimation works, why more data gives better models, and why sample averages converge to population means. It's the theoretical foundation of empirical risk minimization — the basis of all supervised ML.
+
+**Used directly in**:
+- **Monte Carlo estimation**: approximate $E[f(X)]$ by sampling: `np.mean([f(x) for x in samples])` — LLN guarantees this converges to the true expectation. Used in Bayesian inference (MCMC), reinforcement learning (policy evaluation), and option pricing
+- **Empirical risk minimization**: training loss $\frac{1}{n}\sum L(f(x_i), y_i) \to E[L]$ as $n \to \infty$ — LLN is why "more data = better model" is true
+- **Cross-validation reliability**: the average CV score converges to the true expected performance by LLN — more folds = more reliable estimate
+
 **Statement**: Let $X_1, X_2, \ldots, X_n$ be i.i.d. with mean $\mu$. Then:
 
 $$\bar{X}_n = \frac{1}{n}\sum_{i=1}^n X_i \xrightarrow{} \mu \quad \text{as } n \to \infty$$
@@ -1606,6 +1791,13 @@ plt.show()
 ### Delta Method
 
 Approximates the distribution of a *function* of a random variable.
+
+**Why learn this**: Many business metrics are ratios: revenue per user, clicks per impression, cost per acquisition. You can't just use the standard SE formula for these. The Delta Method gives you analytical standard errors for ratio metrics — critical for A/B testing at scale where bootstrapping is too slow.
+
+**Used directly in**:
+- **Ratio metric SEs in A/B testing**: revenue per user = total_revenue / total_users is a ratio — the Delta Method gives you $SE(\hat{R})$ analytically without bootstrapping, which is critical at scale (millions of users)
+- **Variance-stabilizing transforms**: for Poisson data, $g(X) = \sqrt{X}$ stabilizes variance (since $\text{Var}(X) = \mu$ varies) — the Delta Method tells you which transform works
+- **Confidence intervals for nonlinear functions**: CIs for $\log(\hat{p})$, $1/\hat{\mu}$, or any smooth function of an estimator — the Delta Method provides the SE without simulation
 
 **Statement**: If $\sqrt{n}(\bar{X}_n - \mu) \xrightarrow{d} \mathcal{N}(0, \sigma^2)$, then for a differentiable function $g$:
 
@@ -1703,6 +1895,13 @@ print(f"They should be similar here since denominator is fixed (n)")
 
 Most distributions we've covered belong to the **exponential family** — a powerful unification.
 
+**Why learn this**: Exponential family is the reason GLMs work, the reason conjugate priors exist, and the reason MLE has nice properties. Understanding it transforms the distribution zoo from a list of formulas into a single unified framework — and shows interviewers you see the deep structure.
+
+**Used directly in**:
+- **GLM model selection**: knowing which distribution is exponential family tells you which GLM to use — Normal → OLS, Bernoulli → logistic, Poisson → Poisson regression, Gamma → Gamma regression
+- **Sufficient statistics**: for exponential family, MLE reduces to matching model moments to sample moments — this is why `np.mean(x)` is the MLE for Poisson $\lambda$ and Normal $\mu$
+- **Conjugate prior lookup**: every exponential family has a conjugate prior → closed-form Bayesian updates without MCMC. Beta-Binomial, Gamma-Poisson, Normal-Normal are the three you'll use most
+
 **General form**:
 
 $$p(x \mid \boldsymbol{\eta}) = h(x) \exp(\boldsymbol{\eta}^T \mathbf{T}(x) - A(\boldsymbol{\eta}))$$
@@ -1738,6 +1937,13 @@ $$p(x \mid \boldsymbol{\eta}) = h(x) \exp(\boldsymbol{\eta}^T \mathbf{T}(x) - A(
 ---
 
 ### Key Relationships Diagram
+
+**Why learn this**: Interviewers love asking "how does X relate to Y?" for distributions. Being able to sketch the relationship diagram from memory — showing how Bernoulli builds to Binomial builds to Normal via CLT, how Exponential specializes Gamma which becomes Chi-squared — demonstrates mastery rather than memorization.
+
+**Used directly in**:
+- **Choosing the right statistical test**: Bernoulli → Binomial → Normal (CLT) is the chain that takes you from individual binary events to z-tests for proportions — knowing this chain means you can derive the right test from first principles
+- **Debugging model assumptions**: if residuals look Chi-squared (right-skewed, positive), your data might need a Gamma or Poisson model instead of Normal — the relationship diagram tells you where to look
+- **Interview derivations**: "Derive the distribution of the sample variance" requires knowing Normal → Chi-squared. "Why does the t-test use the t-distribution?" requires knowing Normal/Chi-squared → t. These chains are the building blocks
 
 ```mermaid
 flowchart TD
