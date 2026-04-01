@@ -54,6 +54,7 @@ title: "2.2 Distributions"
 # Document Outline
 - [Executive Summary](#executive-summary)
 - [2.2.1 Discrete Distributions](#221-discrete-distributions-h)
+  - [Foundational Concepts: Support, Expectation, and Variance](#foundational-concepts-support-expectation-and-variance)
   - [Bernoulli Distribution](#bernoulli-distribution)
   - [Binomial Distribution](#binomial-distribution)
   - [Poisson Distribution](#poisson-distribution)
@@ -129,6 +130,133 @@ Use this to read alongside your physical copy:
 
 ---
 
+### Foundational Concepts: Support, Expectation, and Variance
+
+Before diving into individual distributions, you need to understand **three concepts** that appear in every single distribution's property table. This section explains *what* they are, *why* they matter, and *how* the math derives them — first in general, then worked through step-by-step with the Bernoulli.
+
+---
+
+#### What Does "Support" Mean?
+
+**Plain English**: The **support** of a distribution is the set of values that can actually happen — the values where the probability is not zero.
+
+Think of it as the "menu" of outcomes the random variable is allowed to produce.
+
+| Distribution | Support | In Plain English |
+|---|---|---|
+| Bernoulli | $\{0, 1\}$ | Only two outcomes: success or failure |
+| Binomial$(n, p)$ | $\{0, 1, 2, \ldots, n\}$ | You can get anywhere from 0 to $n$ successes |
+| Poisson | $\{0, 1, 2, \ldots\}$ | Any non-negative count (no upper limit) |
+| Normal | $(-\infty, +\infty)$ | Any real number, in theory |
+| Exponential | $[0, +\infty)$ | Any non-negative real number (waiting time can't be negative) |
+
+**Why it matters**:
+- Support tells you **where to sum** (discrete) or **where to integrate** (continuous) when computing expectations, variances, probabilities, and likelihoods.
+- It constrains what a model can predict. A Poisson regression can't predict negative counts — because $-3$ is not in the support. A Normal regression *can* predict negative values — because $(-\infty, +\infty)$ is its support.
+- When you write software to simulate from or evaluate a distribution, you need to know the valid domain.
+
+---
+
+#### How to Derive Expectation (Mean) — General Framework
+
+**Plain English**: The expectation $E[X]$ is the **long-run average** of a random variable. If you repeated the experiment millions of times and averaged all the results, the answer would converge to $E[X]$.
+
+##### Discrete Case
+
+$$E[X] = \sum_{x \in \text{support}} x \cdot P(X = x)$$
+
+**What this formula says in words**: "Go through every possible outcome $x$. For each one, ask: how likely is it [$P(X = x)$]? Weight the outcome by its probability. Add everything up."
+
+**Why this works**: Outcomes that happen often get heavy weight; outcomes that rarely happen get near-zero weight. The weighted sum gives you the "center of mass" — the value the distribution leans toward over the long run.
+
+**Analogy**: Imagine a weighted die. To find its average roll, you wouldn't just compute $(1+2+3+4+5+6)/6$ — you'd weight each face by how often it actually appears. That's exactly what $E[X]$ does.
+
+##### Continuous Case
+
+$$E[X] = \int_{-\infty}^{\infty} x \cdot f(x) \, dx$$
+
+Same idea — but instead of summing over discrete outcomes, you integrate over all real values using the probability density function $f(x)$. The integral limits are effectively the support (since $f(x) = 0$ outside it).
+
+---
+
+#### How to Derive Variance — General Framework
+
+**Plain English**: The variance $\text{Var}(X)$ measures **how spread out** the outcomes are around the mean. A small variance means outcomes cluster tightly around $E[X]$; a large variance means they're scattered.
+
+##### The Definition
+
+$$\text{Var}(X) = E\big[(X - \mu)^2\big]$$
+
+where $\mu = E[X]$.
+
+**What this says in words**: "For each possible outcome, compute how far it is from the mean $(X - \mu)$. Square that distance (so negatives don't cancel positives). Then take the expected value (probability-weighted average) of those squared distances."
+
+##### The Shortcut Formula
+
+$$\text{Var}(X) = E[X^2] - (E[X])^2$$
+
+**Why this shortcut exists**: Expanding $(X - \mu)^2 = X^2 - 2\mu X + \mu^2$ and taking expectations gives $E[X^2] - 2\mu E[X] + \mu^2 = E[X^2] - \mu^2$. This is often *much* easier to compute than the definition, because you only need $E[X]$ and $E[X^2]$.
+
+##### Discrete Case
+
+$$\text{Var}(X) = \sum_{x \in \text{support}} (x - \mu)^2 \cdot P(X = x) \quad \text{or equivalently} \quad \sum_{x} x^2 \cdot P(X = x) - \mu^2$$
+
+##### Continuous Case
+
+$$\text{Var}(X) = \int_{-\infty}^{\infty} (x - \mu)^2 \cdot f(x) \, dx \quad \text{or equivalently} \quad \int_{-\infty}^{\infty} x^2 \cdot f(x) \, dx - \mu^2$$
+
+---
+
+#### Worked Derivation: Bernoulli Expectation and Variance
+
+Now let's apply the general framework to the simplest distribution.
+
+**Setup**: $X \sim \text{Bernoulli}(p)$, meaning $X = 1$ with probability $p$, and $X = 0$ with probability $1-p$.
+
+**Support**: $\{0, 1\}$ — so every sum has exactly two terms.
+
+##### Deriving $E[X]$
+
+$$E[X] = \sum_{x \in \{0, 1\}} x \cdot P(X = x)$$
+
+Expand the sum — there are only two values in the support:
+
+$$E[X] = 0 \cdot P(X = 0) + 1 \cdot P(X = 1)$$
+
+$$= 0 \cdot (1 - p) + 1 \cdot p$$
+
+$$= p$$
+
+**Plain English**: The first term is "the value 0, weighted by its probability $(1-p)$" — but $0 \times$ anything $= 0$, so failures contribute nothing to the average. The second term is "the value 1, weighted by its probability $p$" — which is just $p$. So the long-run average of a 0/1 coin flip is simply the probability of success. This should feel intuitive: if a coin lands heads 30% of the time, the average of millions of flips is 0.30.
+
+##### Deriving $\text{Var}(X)$ (using the shortcut)
+
+**Step 1**: Compute $E[X^2]$
+
+$$E[X^2] = \sum_{x \in \{0, 1\}} x^2 \cdot P(X = x) = 0^2 \cdot (1-p) + 1^2 \cdot p = p$$
+
+Wait — $E[X^2] = p$ — the same as $E[X]$? Yes! Because $0^2 = 0$ and $1^2 = 1$, so squaring 0s and 1s changes nothing.
+
+**Step 2**: Apply the shortcut
+
+$$\text{Var}(X) = E[X^2] - (E[X])^2 = p - p^2 = p(1-p)$$
+
+**Plain English**: The variance is $p(1-p)$. This is a product of "how likely success is" times "how likely failure is." Think about the extremes:
+- If $p = 0$ (never succeeds) or $p = 1$ (always succeeds), there's **no uncertainty** — you know the outcome — so variance $= 0$.
+- If $p = 0.5$ (pure coin flip), uncertainty is **maximized** — you genuinely can't predict the outcome — so variance $= 0.25$, the highest possible.
+
+The formula $p(1-p)$ naturally captures this: it's a downward parabola that peaks at $p = 0.5$ and hits zero at the endpoints.
+
+> [!TIP]
+> **Derivation template**: For every distribution in this file, the expectation and variance are derived using the exact same recipe:
+> 1. Write out the definition: $E[X] = \sum x \cdot P(X=x)$ (or the integral for continuous)
+> 2. Substitute the PMF/PDF formula
+> 3. Simplify using algebra, known series, or the shortcut $\text{Var} = E[X^2] - (E[X])^2$
+>
+> The only thing that changes between distributions is the PMF/PDF and the support. The *method* is always the same.
+
+---
+
 ### Bernoulli Distribution
 
 The simplest possible distribution: a single trial with two outcomes.
@@ -143,6 +271,13 @@ The simplest possible distribution: a single trial with two outcomes.
 $$X \sim \text{Bernoulli}(p)$$
 
 $$P(X = x) = p^x (1-p)^{1-x}, \quad x \in \{0, 1\}$$
+
+**Symbol definitions**:
+- $X$ = the random variable: the outcome of a single trial (0 = failure, 1 = success)
+- $p$ = **parameter** you set: the probability of success on that trial
+- $x$ = **query value** you plug in: either 0 or 1
+
+**What it outputs**: You give it $x = 0$ or $x = 1$, and it returns the probability of that outcome. That's it — it answers "how likely is success?" ($p$) or "how likely is failure?" ($1-p$).
 
 | Property | Value |
 |----------|-------|
@@ -182,6 +317,15 @@ The number of successes in $n$ independent Bernoulli trials.
 $$X \sim \text{Binomial}(n, p)$$
 
 $$P(X = k) = \binom{n}{k} p^k (1-p)^{n-k}, \quad k = 0, 1, \ldots, n$$
+
+**Symbol definitions**:
+- $X$ = the random variable: the total number of successes out of $n$ trials
+- $n$ = **parameter** you set: how many independent trials you run
+- $p$ = **parameter** you set: the probability of success on each trial
+- $k$ = **query value** you plug in: "what if exactly this many succeed?"
+- $\binom{n}{k}$ = the number of ways to arrange $k$ successes among $n$ trials ("$n$ choose $k$")
+
+**What it outputs**: You give it a count $k$, and it returns the probability of getting exactly $k$ successes out of $n$ trials. Example: "What's the probability that exactly 60 out of 1000 visitors convert?"
 
 | Property | Value |
 |----------|-------|
@@ -248,6 +392,15 @@ Models the count of events occurring in a fixed interval (time, area, volume) at
 $$X \sim \text{Poisson}(\lambda)$$
 
 $$P(X = k) = \frac{\lambda^k e^{-\lambda}}{k!}, \quad k = 0, 1, 2, \ldots$$
+
+**Symbol definitions**:
+- $X$ = the random variable: the count of events that occur in a **fixed interval** (the interval is decided by you, e.g., "per hour")
+- $\lambda$ = **parameter** you set: the average rate of events per interval (e.g., 3 errors/hour)
+- $k$ = **query value** you plug in: "what if exactly this many events happen?"
+- $e^{-\lambda}$ = baseline probability factor that ensures everything sums to 1
+- $k!$ = factorial, accounts for the ordering of events
+
+**What it outputs**: You give it a count $k$, and it returns the probability of seeing exactly $k$ events in your fixed interval. The interval itself is baked into $\lambda$ — the distribution does not output a time or interval, only a probability for a given count.
 
 | Property | Value |
 |----------|-------|
@@ -317,6 +470,15 @@ $$X \sim \text{Geometric}(p)$$
 
 $$P(X = k) = (1-p)^{k-1} p, \quad k = 1, 2, 3, \ldots$$
 
+**Symbol definitions**:
+- $X$ = the random variable: the total number of trials needed to get the first success
+- $p$ = **parameter** you set: the probability of success on each trial
+- $k$ = **query value** you plug in: "what if it takes exactly this many trials?"
+- $(1-p)^{k-1}$ = probability of failing the first $k-1$ trials in a row
+- $p$ (at the end) = probability of succeeding on the $k$-th trial
+
+**What it outputs**: You give it a trial number $k$, and it returns the probability that the **first success happens on exactly trial $k$**. The formula literally reads: "fail $k-1$ times, then succeed once."
+
 | Property | Value |
 |----------|-------|
 | **Parameters** | $p \in (0, 1]$ (success probability) |
@@ -335,6 +497,22 @@ $$P(X > s + t \mid X > s) = P(X > t)$$
 
 > [!TIP]
 > **The Geometric distribution is the ONLY discrete distribution with the memoryless property.** Its continuous counterpart is the Exponential distribution (Section 2.2.2), which is the only continuous memoryless distribution.
+
+> [!WARNING]
+> **Common confusion: Independence $\neq$ Memorylessness**
+>
+> All Bernoulli-family distributions (Bernoulli, Binomial, Geometric, Negative Binomial) assume **independent (i.i.d.) trials** — each trial's outcome doesn't depend on previous trials. But **memorylessness** is a different, stronger property about the *aggregate random variable*, not individual trials.
+>
+> | Property | What it means | Who has it |
+> |---|---|---|
+> | **Independence (i.i.d.)** | Each trial's outcome doesn't depend on other trials | All Bernoulli-family distributions |
+> | **Memorylessness** | The *waiting time* distribution is unchanged given past failures | Only **Geometric** (discrete) and **Exponential** (continuous) |
+>
+> **Why Binomial is NOT memoryless**: $X$ = total successes out of $n$ fixed trials. After observing some trials, you know how many remain and how many successes you've seen — that information changes your probability. There's nothing to "reset."
+>
+> **Why Negative Binomial is NOT memoryless**: $X$ = trials until $r$ successes. If you've already gotten 2 out of 3 needed successes, you only need 1 more — you're clearly closer to done. The past matters.
+>
+> **Why Geometric IS memoryless**: $X$ = trials until the **first** success. If you've failed 100 times, the probability of needing at least 5 more is *exactly the same* as when you started. Each trial is a fresh coin flip, and since you're waiting for only one success, there's no partial progress to track — you're always "starting from scratch."
 
 > [!NOTE]
 > **Fundamental ML Connections**
@@ -362,6 +540,16 @@ $$X \sim \text{NegBin}(r, p)$$
 
 $$P(X = k) = \binom{k-1}{r-1} p^r (1-p)^{k-r}, \quad k = r, r+1, r+2, \ldots$$
 
+**Symbol definitions**:
+- $X$ = the random variable: the total number of trials needed to accumulate $r$ successes
+- $r$ = **parameter** you set: how many successes you're waiting for
+- $p$ = **parameter** you set: the probability of success on each trial
+- $k$ = **query value** you plug in: "what if it takes exactly this many trials to get $r$ successes?"
+- $\binom{k-1}{r-1}$ = the number of ways to arrange $r-1$ successes in the first $k-1$ trials (the $r$-th success is fixed at position $k$)
+- $p^r$ = probability of $r$ successes, $(1-p)^{k-r}$ = probability of $k-r$ failures
+
+**What it outputs**: You give it a trial count $k$, and it returns the probability that the $r$-th success occurs on exactly trial $k$. When $r=1$, this reduces to the Geometric distribution.
+
 | Property | Value |
 |----------|-------|
 | **Parameters** | $r > 0$ (successes needed), $p \in (0, 1]$ (success probability) |
@@ -379,6 +567,79 @@ $$P(X = k) = \binom{k-1}{r-1} p^r (1-p)^{k-r}, \quad k = r, r+1, r+2, \ldots$$
 > |---|---|---|
 > | Poisson | $\text{Var} = \mu$ | Counts are well-behaved (rare) |
 > | Negative Binomial | $\text{Var} > \mu$ | Counts are overdispersed (common) |
+
+<details>
+<summary><strong>Practical Guide: How to Tell from Your Data Whether to Use Poisson or Negative Binomial</strong></summary>
+
+#### Step 1: Check the Dispersion Ratio
+
+The single most important diagnostic. Compute variance / mean on your count data:
+
+```python
+import numpy as np
+
+counts = np.array([...])  # your count data
+dispersion_ratio = counts.var() / counts.mean()
+print(f"Dispersion ratio: {dispersion_ratio:.2f}")
+```
+
+| Dispersion Ratio | Interpretation | Use |
+|---|---|---|
+| $\approx 1.0$ | Equidispersed — Poisson assumption holds | **Poisson** |
+| $> 1.5$ | Overdispersed — variance exceeds mean | **Negative Binomial** |
+| $< 0.8$ | Underdispersed — rare; consider Binomial or COM-Poisson | Neither |
+
+**Plain English**: If your data has a mean of 5 events/day but the variance is 20, the dispersion ratio is 4.0 — far too high for Poisson. This happens when your data has more extreme values (or more zeros) than Poisson expects.
+
+#### Step 2: Fit Both and Compare (Likelihood Ratio Test)
+
+```python
+import statsmodels.api as sm
+
+# Fit Poisson
+poisson_model = sm.GLM(y, X, family=sm.families.Poisson()).fit()
+
+# Fit Negative Binomial
+nb_model = sm.GLM(y, X, family=sm.families.NegativeBinomial()).fit()
+
+# Compare: lower AIC = better fit
+print(f"Poisson AIC:  {poisson_model.aic:.1f}")
+print(f"NegBin AIC:   {nb_model.aic:.1f}")
+
+# If NegBin AIC is meaningfully lower, overdispersion is real
+```
+
+#### Step 3: Check Residuals
+
+After fitting a Poisson model, look at Pearson residuals. If Poisson is correct, the residual deviance should be approximately equal to the residual degrees of freedom:
+
+```python
+# Pearson chi-squared / df should be near 1.0 for Poisson
+pearson_chi2 = poisson_model.pearson_chi2
+df_resid = poisson_model.df_resid
+print(f"Pearson chi2 / df = {pearson_chi2 / df_resid:.2f}")
+# If >> 1.0, your data is overdispersed -> switch to NB
+```
+
+#### Why This Matters Practically
+
+Using Poisson on overdispersed data **underestimates standard errors**, which means:
+- P-values are too small (false positives)
+- Confidence intervals are too narrow (overconfident predictions)
+- You'll conclude effects are "significant" when they're not
+
+Switching to Negative Binomial fixes this by modeling the extra variance explicitly.
+
+#### Real-World Examples
+
+| Domain | Typical Data | Dispersion Ratio | Result |
+|---|---|---|---|
+| Server errors/hour | Steady, independent failures | $\approx 1.0$ | Poisson works |
+| Daily retail demand | Bursty, driven by promotions/weather | $3-10$ | NB needed |
+| Insurance claims/month | Many zeros, occasional large spikes | $5-50$ | NB needed |
+| Hospital readmissions | Patient heterogeneity | $2-5$ | NB needed |
+
+</details>
 
 > [!NOTE]
 > **Fundamental ML Connection**
@@ -405,6 +666,15 @@ $$\mathbf{X} \sim \text{Multinomial}(n, \mathbf{p}) \quad \text{where } \mathbf{
 
 $$P(X_1 = x_1, \ldots, X_K = x_K) = \frac{n!}{x_1! x_2! \cdots x_K!} \prod_{k=1}^K p_k^{x_k}$$
 
+**Symbol definitions**:
+- $\mathbf{X} = (X_1, X_2, \ldots, X_K)$ = vector of random variables: the count of outcomes falling into each of $K$ categories
+- $n$ = **parameter** you set: total number of trials
+- $\mathbf{p} = (p_1, \ldots, p_K)$ = **parameter** you set: probability vector, where $p_k$ is the chance of landing in category $k$
+- $x_1, \ldots, x_K$ = **query values** you plug in: "what if exactly $x_1$ land in category 1, $x_2$ in category 2, etc.?"
+- $\frac{n!}{x_1! \cdots x_K!}$ = the multinomial coefficient: how many ways to arrange the outcomes into those category counts
+
+**What it outputs**: You give it a vector of counts $(x_1, \ldots, x_K)$ that sum to $n$, and it returns the probability of exactly that allocation across all $K$ categories. Example: "What's the probability that out of 100 users, exactly 60 use iOS, 30 Android, 10 Web?"
+
 | Property | Value |
 |----------|-------|
 | **Parameters** | $n$ (trials), $\mathbf{p}$ (probability vector, length $K$) |
@@ -430,34 +700,71 @@ $$P(X_1 = x_1, \ldots, X_K = x_K) = \frac{n!}{x_1! x_2! \cdots x_K!} \prod_{k=1}
 
 ---
 
+### How Distributions Get Used in Practice
+
+A distribution is a **machine with two modes**:
+
+| Mode | You provide | It returns | Used for |
+|---|---|---|---|
+| **Evaluate** (PMF/PDF) | A specific value $k$ | The probability of that value | Loss functions, likelihoods, hypothesis testing |
+| **Sample** (generate) | Just the parameters | A random value drawn from the distribution | Simulation, prediction, dropout masks, Thompson Sampling |
+
+**Evaluate**: "What's the probability of exactly 3 server errors this hour?" → `stats.poisson.pmf(k=3, mu=5)` → returns $0.14$
+
+**Sample**: "Simulate what happens this hour" → `stats.poisson.rvs(mu=5)` → returns a random count like $7$
+
+When you **train** a model, you evaluate (compute likelihood of observed data). When you **simulate or predict**, you sample.
+
+---
+
 ### Which Discrete Distribution? (Decision Guide)
 
 ```mermaid
 flowchart TD
-    START["Discrete random variable"]
-    
-    START --> Q1{"How many<br/>possible outcomes?"}
-    
-    Q1 -->|"Exactly 2<br/>(success/failure)"| Q2{"How many<br/>trials?"}
-    Q1 -->|"More than 2<br/>(categories)"| MULTI["Multinomial<br/>(n trials, K categories)"]
-    
-    Q2 -->|"1 trial"| BERN["Bernoulli(p)"]
-    Q2 -->|"n trials, count successes"| BINOM["Binomial(n, p)"]
-    Q2 -->|"Trials until<br/>1st success"| GEOM["Geometric(p)"]
-    Q2 -->|"Trials until<br/>r-th success"| NEGBIN["Negative Binomial(r, p)"]
-    
-    START --> Q3{"Counting events<br/>in fixed interval?"}
-    Q3 -->|"Yes, rare events<br/>mean ≈ variance"| POIS["Poisson(lambda)"]
-    Q3 -->|"Yes, but<br/>variance > mean"| NEGBIN2["Negative Binomial<br/>(overdispersed counts)"]
-    
+    START["You have<br/>COUNT DATA"]
+
+    START --> Q1{"How many possible<br/>outcomes per trial?"}
+
+    Q1 -->|"Exactly 2<br/>(yes/no, pass/fail,<br/>click/no-click)"| Q2{"How many<br/>trials?"}
+    Q1 -->|"More than 2<br/>(K categories)"| MULTI["<strong>Multinomial</strong>(n, p)<br/>─────────────<br/>Mean: np_k<br/>Var: np_k(1-p_k)<br/>─────────────<br/>Example: device mix<br/>(iOS/Android/Web)<br/>ML: softmax output"]
+
+    Q2 -->|"Exactly 1"| BERN["<strong>Bernoulli</strong>(p)<br/>─────────────<br/>Mean: p<br/>Var: p(1-p)<br/>─────────────<br/>Example: single user<br/>converts or not<br/>ML: sigmoid output,<br/>binary cross-entropy"]
+
+    Q2 -->|"Fixed n trials,<br/>count total successes"| BINOM["<strong>Binomial</strong>(n, p)<br/>─────────────<br/>Mean: np<br/>Var: np(1-p)<br/>─────────────<br/>Example: 60 conversions<br/>out of 1000 visitors<br/>ML: A/B test,<br/>exact binomial test"]
+
+    Q2 -->|"Unknown number of trials,<br/>waiting for 1st success"| GEOM["<strong>Geometric</strong>(p)<br/>─────────────<br/>Mean: 1/p<br/>Var: (1-p)/p^2<br/>─────────────<br/>Example: calls<br/>until first sale<br/>ONLY discrete<br/>memoryless dist."]
+
+    Q2 -->|"Unknown number of trials,<br/>waiting for r-th success"| NEGBIN_WAIT["<strong>Neg. Binomial</strong>(r, p)<br/>─────────────<br/>Mean: r/p<br/>Var: r(1-p)/p^2<br/>─────────────<br/>Example: inspections<br/>until 3rd defect found<br/>Geometric when r=1"]
+
+    START --> Q3{"Counting events in<br/>a fixed interval?<br/>(no fixed n)"}
+
+    Q3 -->|"Yes"| Q4{"Check:<br/>Var / Mean ≈ ?"}
+    Q4 -->|"≈ 1.0<br/>(equidispersed)"| POIS["<strong>Poisson</strong>(lambda)<br/>─────────────<br/>Mean: lambda<br/>Var: lambda<br/>─────────────<br/>Example: 3 server<br/>errors per hour<br/>ML: Poisson regression,<br/>count prediction loss"]
+    Q4 -->|"> 1.5<br/>(overdispersed)"| NEGBIN_OD["<strong>Neg. Binomial</strong><br/>(overdispersed counts)<br/>─────────────<br/>Var > Mean<br/>─────────────<br/>Example: daily retail<br/>demand, insurance claims<br/>ML: DeepAR forecaster,<br/>NB regression"]
+
     style BERN fill:#4a90d9,stroke:#333,color:#fff
     style BINOM fill:#4a90d9,stroke:#333,color:#fff
     style POIS fill:#50c878,stroke:#333,color:#fff
     style GEOM fill:#ffa500,stroke:#333,color:#fff
-    style NEGBIN fill:#ffa500,stroke:#333,color:#fff
-    style NEGBIN2 fill:#50c878,stroke:#333,color:#fff
+    style NEGBIN_WAIT fill:#ffa500,stroke:#333,color:#fff
+    style NEGBIN_OD fill:#50c878,stroke:#333,color:#fff
     style MULTI fill:#9370db,stroke:#333,color:#fff
+    style Q4 fill:#f0f0f0,stroke:#666,color:#333
 ```
+
+#### Quick-Reference Review: One-Liner Per Distribution
+
+Use this table to self-test. Cover the right columns and try to recall from the name alone.
+
+| Distribution | What is $X$? | Key Formula to Remember | When You'd Use It | Interview Trigger Phrase |
+|---|---|---|---|---|
+| **Bernoulli** | Single trial outcome (0 or 1) | $\text{Var} = p(1-p)$, max at $p=0.5$ | Model a single yes/no event | "binary cross-entropy loss" |
+| **Binomial** | Count of successes in $n$ trials | $\text{Mean} = np$, $\text{SE} = \sqrt{p(1-p)/n}$ | A/B test: "how many converted?" | "sample size calculation" |
+| **Poisson** | Count of events in fixed interval | $\text{Mean} = \text{Var} = \lambda$ | Server errors/hr, daily orders | "count data" or "rate" |
+| **Geometric** | Trials until 1st success | $E[X] = 1/p$, memoryless | "How many calls until a sale?" | "waiting time" (discrete) |
+| **Neg. Binomial** | Trials until $r$-th success, or overdispersed counts | $\text{Var} > \text{Mean}$ | Real count data (demand, claims) | "overdispersed" or "Var >> Mean" |
+| **Multinomial** | Counts across $K$ categories | $\text{Cov}(X_i, X_j) = -np_ip_j$ | Multi-class allocation | "softmax" or "multi-class" |
+
 
 ---
 
@@ -700,6 +1007,15 @@ $$X \sim \mathcal{N}(\mu, \sigma^2)$$
 
 $$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right)$$
 
+**Symbol definitions**:
+- $X$ = the random variable: a continuous measurement (e.g., height, test score, residual error)
+- $\mu$ = **parameter** you set: the mean (center) of the bell curve
+- $\sigma^2$ = **parameter** you set: the variance (width) of the bell curve; $\sigma$ is the standard deviation
+- $x$ = **query value** you plug in: any real number you want the density for
+- $f(x)$ = the probability **density** at $x$ (not a probability itself — you must integrate over an interval to get a probability)
+
+**What it outputs**: You give it a value $x$, and it returns the density — how relatively likely values near $x$ are. Higher density means observations are more concentrated around that value. The peak is always at $x = \mu$.
+
 | Property | Value |
 |----------|-------|
 | **Parameters** | $\mu \in \mathbb{R}$ (mean/location), $\sigma^2 > 0$ (variance/spread) |
@@ -733,7 +1049,9 @@ $$X + Y \sim \mathcal{N}(\mu_1 + \mu_2, \sigma_1^2 + \sigma_2^2)$$
 > [!IMPORTANT]
 > **Why the Normal is everywhere** (Goodfellow 3.9.3):
 > 1. **CLT**: Sums of many independent random variables converge to Normal — regardless of the original distribution. This is why sample means, test statistics, and SGD gradients are approximately Normal.
-> 2. **Maximum entropy**: Among all distributions with a given mean and variance, the Normal has the *maximum entropy* (maximum uncertainty). Using it means assuming "nothing beyond what we measured" — the least biased choice.
+> 2. **Maximum entropy (The Information Theory angle)**: Entropy measures unpredictability. If you only know the mean $\mu$ and variance $\sigma^2$ of some data, there are infinitely many possible distributions that fit those two facts. Which one should you pick?
+>    - The Normal distribution mathematically has the **absolute highest entropy** (maximum uncertainty) among all distributions with a given mean and variance.
+>    - **Why this matters for ML**: Choosing the maximum entropy distribution is the most conservative, "safest" choice you can make. It means you are assuming *only* the mean and variance, and absolutely nothing else (no hidden skew, no weird bounds). When we use MSE (which assumes Normal errors), we are formally stating: "I know my errors have some variance, but I refuse to inject any other assumptions or bias into my model." It is the ultimate "agnostic" distribution.
 > 3. **Mathematical convenience**: The log of the Normal PDF is a quadratic — which makes MLE, MAP, and optimization easy.
 
 <details>
@@ -785,6 +1103,14 @@ $$X \sim \text{Exponential}(\lambda)$$
 
 $$f(x) = \lambda e^{-\lambda x}, \quad x \geq 0$$
 
+**Symbol definitions**:
+- $X$ = the random variable: the waiting time until the next event (e.g., minutes until next server error)
+- $\lambda$ = **parameter** you set: the rate of events per unit time (e.g., 3 errors/hour)
+- $x$ = **query value** you plug in: a specific waiting time (must be $\geq 0$)
+- $e^{-\lambda x}$ = exponential decay — longer waits are increasingly unlikely
+
+**What it outputs**: You give it a time $x$, and it returns the density at that waiting time. Short waits are most likely (density is highest at $x=0$ and decays). Note: the mean wait is $1/\lambda$, so a higher rate means shorter expected waits.
+
 | Property | Value |
 |----------|-------|
 | **Parameters** | $\lambda > 0$ (rate) |
@@ -831,6 +1157,14 @@ $$X \sim \text{Uniform}(a, b)$$
 
 $$f(x) = \frac{1}{b - a}, \quad a \leq x \leq b$$
 
+**Symbol definitions**:
+- $X$ = the random variable: a value equally likely to land anywhere in $[a, b]$
+- $a, b$ = **parameters** you set: the left and right endpoints of the interval
+- $x$ = **query value** you plug in: any value between $a$ and $b$
+- $\frac{1}{b-a}$ = constant density — every point in the interval is equally likely
+
+**What it outputs**: For any $x$ in $[a, b]$, the density is the same constant $\frac{1}{b-a}$. Outside $[a, b]$, the density is 0. This is the "I have no idea, every value is equally plausible" distribution.
+
 | Property | Value |
 |----------|-------|
 | **Parameters** | $a, b \in \mathbb{R}$, $a < b$ (endpoints) |
@@ -861,6 +1195,15 @@ If $\log(X) \sim \mathcal{N}(\mu, \sigma^2)$, then $X \sim \text{Log-Normal}(\mu
 - **Financial modeling**: stock returns are approximately Log-Normal — if you model price paths (Monte Carlo simulation), this is the assumed distribution
 
 $$f(x) = \frac{1}{x\sigma\sqrt{2\pi}} \exp\left(-\frac{(\ln x - \mu)^2}{2\sigma^2}\right), \quad x > 0$$
+
+**Symbol definitions**:
+- $X$ = the random variable: a strictly positive, right-skewed measurement (e.g., house price, response latency, salary)
+- $\mu$ = **parameter**: the mean of $\ln(X)$ (not the mean of $X$ itself!)
+- $\sigma^2$ = **parameter**: the variance of $\ln(X)$
+- $x$ = **query value** you plug in: any positive real number
+- $\ln x$ = natural log of $x$ — this transformation maps Log-Normal back to Normal
+
+**What it outputs**: You give it a positive value $x$, and it returns the density. Key insight: if you take the log of a Log-Normal random variable, you get a Normal. So the distribution is just a Normal "seen through the exponential lens."
 
 | Property | Value |
 |----------|-------|
@@ -895,6 +1238,15 @@ The distribution over probabilities — values constrained to $[0, 1]$.
 $$X \sim \text{Beta}(\alpha, \beta)$$
 
 $$f(x) = \frac{x^{\alpha-1}(1-x)^{\beta-1}}{B(\alpha, \beta)}, \quad 0 \leq x \leq 1$$
+
+**Symbol definitions**:
+- $X$ = the random variable: a probability or proportion (always between 0 and 1)
+- $\alpha$ = **parameter** you set: controls mass toward 1 (think: "pseudo-count of successes")
+- $\beta$ = **parameter** you set: controls mass toward 0 (think: "pseudo-count of failures")
+- $x$ = **query value** you plug in: a specific probability value in $[0, 1]$
+- $B(\alpha, \beta)$ = the Beta function — a normalizing constant that ensures the PDF integrates to 1
+
+**What it outputs**: You give it a probability $x \in [0, 1]$, and it returns the density — how plausible that probability value is given your prior beliefs encoded in $\alpha$ and $\beta$. This is the distribution you use to express uncertainty *about a probability itself*.
 
 where $B(\alpha, \beta) = \frac{\Gamma(\alpha)\Gamma(\beta)}{\Gamma(\alpha+\beta)}$ is the Beta function (normalizing constant).
 
@@ -947,8 +1299,8 @@ fig.suptitle('Beta Distribution Shape Gallery', fontsize=16, fontweight='bold')
 params = [
     (1, 1, 'Uniform: Beta(1,1)'),
     (0.5, 0.5, 'U-shaped: Beta(0.5,0.5)'),
-    (2, 5, 'Left-skewed: Beta(2,5)'),
-    (5, 2, 'Right-skewed: Beta(5,2)'),
+    (2, 5, 'Right-skewed: Beta(2,5)'),
+    (5, 2, 'Left-skewed: Beta(5,2)'),
     (5, 5, 'Symmetric: Beta(5,5)'),
     (50, 50, 'Concentrated: Beta(50,50)')
 ]
@@ -992,6 +1344,15 @@ $$X \sim \text{Gamma}(\alpha, \beta)$$
 
 $$f(x) = \frac{\beta^\alpha}{\Gamma(\alpha)} x^{\alpha-1} e^{-\beta x}, \quad x > 0$$
 
+**Symbol definitions**:
+- $X$ = the random variable: a positive-valued continuous quantity (e.g., total wait time, insurance claim amount)
+- $\alpha$ = **parameter** you set: the shape (controls skewness; higher $\alpha$ makes it more symmetric)
+- $\beta$ = **parameter** you set: the rate (higher $\beta$ compresses the distribution leftward)
+- $x$ = **query value** you plug in: any positive real number
+- $\Gamma(\alpha)$ = the Gamma function (a generalization of factorial: $\Gamma(n) = (n-1)!$ for integers)
+
+**What it outputs**: You give it a positive value $x$, and it returns the density. The Gamma is a flexible family: it includes the Exponential ($\alpha=1$) and Chi-squared ($\alpha=k/2, \beta=1/2$) as special cases. Think of it as "time to complete $\alpha$ stages, each with rate $\beta$."
+
 | Property | Value |
 |----------|-------|
 | **Parameters** | $\alpha > 0$ (shape), $\beta > 0$ (rate) |
@@ -1031,6 +1392,13 @@ $$X \sim \chi^2(k)$$
 If $Z_1, Z_2, \ldots, Z_k \sim \mathcal{N}(0,1)$ are i.i.d., then:
 
 $$X = \sum_{i=1}^k Z_i^2 \sim \chi^2(k)$$
+
+**Symbol definitions**:
+- $X$ = the random variable: the sum of $k$ squared standard Normal values
+- $k$ = **parameter**: degrees of freedom (the number of independent standard Normals being squared and summed)
+- $Z_i$ = independent standard Normal random variables $\mathcal{N}(0,1)$
+
+**What it outputs**: The Chi-squared is not one you typically query directly for density. Instead it's used as a **reference distribution for test statistics**. You compute a chi-squared test statistic from data, then ask: "How likely is a value this large under $H_0$?" That p-value comes from the $\chi^2(k)$ distribution.
 
 | Property | Value |
 |----------|-------|
@@ -1073,6 +1441,14 @@ $$X \sim t(k)$$
 If $Z \sim \mathcal{N}(0,1)$ and $V \sim \chi^2(k)$ are independent, then:
 
 $$T = \frac{Z}{\sqrt{V/k}} \sim t(k)$$
+
+**Symbol definitions**:
+- $T$ = the random variable: a ratio of a standard Normal to the square root of a Chi-squared (scaled)
+- $Z$ = a standard Normal $\mathcal{N}(0,1)$ random variable
+- $V$ = a $\chi^2(k)$ random variable, independent of $Z$
+- $k$ = **parameter**: degrees of freedom (in practice, typically $n - 1$ or $n - p$ from your sample)
+
+**What it outputs**: Like Chi-squared, this is a **reference distribution for test statistics**. In practice: you compute $t = \hat{\beta}/SE(\hat{\beta})$, then look up how extreme that value is under the $t(k)$ distribution. The result is your p-value. It looks like a Normal but with heavier tails (more probability in the extremes), which accounts for the extra uncertainty from estimating variance.
 
 | Property | Value |
 |----------|-------|
@@ -1118,6 +1494,15 @@ $$X \sim F(d_1, d_2)$$
 If $U \sim \chi^2(d_1)$ and $V \sim \chi^2(d_2)$ are independent, then:
 
 $$F = \frac{U/d_1}{V/d_2} \sim F(d_1, d_2)$$
+
+**Symbol definitions**:
+- $F$ = the random variable: a ratio of two scaled Chi-squared variables
+- $U$ = a $\chi^2(d_1)$ random variable (numerator)
+- $V$ = a $\chi^2(d_2)$ random variable (denominator), independent of $U$
+- $d_1$ = **parameter**: numerator degrees of freedom (typically the number of predictors being tested)
+- $d_2$ = **parameter**: denominator degrees of freedom (typically $n - p$, sample size minus number of parameters)
+
+**What it outputs**: Another **reference distribution for test statistics**. You compute an F-statistic (ratio of "explained variance" to "unexplained variance"), then look up the p-value from the $F(d_1, d_2)$ distribution. A large $F$ means the model explains significantly more than noise. Used in ANOVA and overall regression significance tests.
 
 | Property | Value |
 |----------|-------|
@@ -1326,31 +1711,34 @@ plt.show()
 
 ```mermaid
 flowchart TD
-    START["Continuous random variable"]
+    START["You have<br/>CONTINUOUS DATA"]
     
-    START --> Q1{"What is the<br/>support?"}
+    START --> Q1{"What is the<br/>support (range)?"}
     
-    Q1 -->|"All real numbers<br/>(-inf, +inf)"| Q2{"Symmetric<br/>or skewed?"}
-    Q1 -->|"Positive only<br/>(0, +inf)"| Q3{"What generates<br/>the data?"}
-    Q1 -->|"Bounded [0,1]"| BETA["Beta(alpha, beta)<br/>Probabilities, proportions"]
-    Q1 -->|"Bounded [a,b]"| UNIF["Uniform(a, b)<br/>No information"]
+    Q1 -->|"Bounded [0,1]"| BETA["<strong>Beta</strong>(alpha, beta)<br/>─────────────<br/>Mean: alpha/(alpha+beta)<br/>─────────────<br/>Example: CTR, batting avg<br/>ML: Bayesian A/B testing,<br/>Thompson Sampling"]
     
-    Q2 -->|"Symmetric, bell-shaped"| Q4{"Heavy tails?"}
-    Q2 -->|"Need multivariate"| MVN["Multivariate Normal<br/>Mean vector + Cov matrix"]
+    Q1 -->|"Bounded [a,b]"| UNIF["<strong>Uniform</strong>(a, b)<br/>─────────────<br/>Flat density: 1/(b-a)<br/>─────────────<br/>Example: spinning a dial,<br/>true random noise<br/>ML: Hyperparameter search"]
     
-    Q4 -->|"No (or large n)"| NORM["Normal(mu, sigma^2)"]
-    Q4 -->|"Yes (small n,<br/>unknown variance)"| TDIST["t(k) distribution"]
+    Q1 -->|"All real numbers<br/>(-inf, +inf)"| Q2{"Symmetric<br/>or Heavy-tailed?"}
+    Q1 -->|"Positive only<br/>(0, +inf)"| Q3{"What generated<br/>the data?"}
     
-    Q3 -->|"Waiting times<br/>between events"| EXP["Exponential(lambda)"]
-    Q3 -->|"Sum of squared<br/>Normals"| CHI["Chi-squared(k)"]
-    Q3 -->|"Ratio of<br/>variances"| FDIST["F(d1, d2)"]
-    Q3 -->|"Multiplicative<br/>process"| LOGN["Log-Normal(mu, sigma)"]
-    Q3 -->|"General positive,<br/>flexible shape"| GAMMA["Gamma(alpha, beta)"]
+    Q2 -->|"Symmetric,<br/>known variance"| NORM["<strong>Normal</strong>(mu, sigma^2)<br/>─────────────<br/>Mean: mu  |  Var: sigma^2<br/>─────────────<br/>Example: human heights,<br/>measurement errors<br/>ML: MSE loss = Normal MLE"]
     
+    Q2 -->|"Symmetric,<br/>unknown variance<br/>(small sample)"| TDIST["<strong>t-distribution</strong>(k)<br/>─────────────<br/>Heavier tails than Normal<br/>─────────────<br/>Example: stock returns,<br/>small-sample estimates<br/>ML: Regression p-values"]
+    
+    Q2 -->|"Need multi-<br/>dimensional"| MVN["<strong>Multivariate N.</strong>(mu, Sigma)<br/>─────────────<br/>Uses Covariance matrix<br/>─────────────<br/>Example: GPS coordinates,<br/>height & weight together<br/>ML: PCA, Gaussian Processes"]
+    
+    Q3 -->|"Waiting time<br/>between events"| EXP["<strong>Exponential</strong>(lambda)<br/>─────────────<br/>Mean: 1/lambda<br/>─────────────<br/>Example: server uptime,<br/>radioactive decay<br/>ONLY continuous memoryless dist."]
+    
+    Q3 -->|"Multiplicative<br/>growth/decay"| LOGN["<strong>Log-Normal</strong>(mu, sigma)<br/>─────────────<br/>Right-skewed<br/>─────────────<br/>Example: salaries, house<br/>prices, internet traffic<br/>ML: Target log-transform"]
+    
+    Q3 -->|"Sum of squared<br/>Normals"| CHI["<strong>Chi-squared</strong>(k)<br/>─────────────<br/>Mean: k (degrees of freedom)<br/>─────────────<br/>Example: sum of squared errors,<br/>sample variance dispersion<br/>ML: Goodness-of-fit tests"]
+    
+    Q3 -->|"Ratio of<br/>variances"| FDIST["<strong>F-distribution</strong>(d1, d2)<br/>─────────────<br/>Ratio of Chi-squareds<br/>─────────────<br/>Example: comparing variance<br/>of 2 factory machines<br/>ML: ANOVA, overall regression test"]
+
     style NORM fill:#4a90d9,stroke:#333,color:#fff
     style MVN fill:#4a90d9,stroke:#333,color:#fff
     style EXP fill:#50c878,stroke:#333,color:#fff
-    style GAMMA fill:#50c878,stroke:#333,color:#fff
     style LOGN fill:#50c878,stroke:#333,color:#fff
     style CHI fill:#ffa500,stroke:#333,color:#fff
     style TDIST fill:#ffa500,stroke:#333,color:#fff
@@ -1359,23 +1747,83 @@ flowchart TD
     style UNIF fill:#9370db,stroke:#333,color:#fff
 ```
 
----
+#### Visual Feature Guide: Comparing Continuous Distributions
 
-### Continuous Distributions — Summary Table
+To help reason about which distribution is suitable, it helps to look at them side-by-side grouped by their support (range) and shape:
 
-| Distribution | PDF (kernel) | Mean | Variance | Primary Use |
-|---|---|---|---|---|
-| **Normal**$(\mu, \sigma^2)$ | $\exp(-(x-\mu)^2/2\sigma^2)$ | $\mu$ | $\sigma^2$ | Default for real-valued data |
-| **Exponential**$(\lambda)$ | $\lambda e^{-\lambda x}$ | $1/\lambda$ | $1/\lambda^2$ | Waiting times |
-| **Uniform**$(a,b)$ | $1/(b-a)$ | $(a+b)/2$ | $(b-a)^2/12$ | No information / random init |
-| **Log-Normal**$(\mu,\sigma^2)$ | $\frac{1}{x}e^{-(\ln x-\mu)^2/2\sigma^2}$ | $e^{\mu+\sigma^2/2}$ | $(e^{\sigma^2}-1)e^{2\mu+\sigma^2}$ | Multiplicative data |
-| **Beta**$(\alpha,\beta)$ | $x^{\alpha-1}(1-x)^{\beta-1}$ | $\frac{\alpha}{\alpha+\beta}$ | $\frac{\alpha\beta}{(\alpha+\beta)^2(\alpha+\beta+1)}$ | Probabilities, priors |
-| **Gamma**$(\alpha,\beta)$ | $x^{\alpha-1}e^{-\beta x}$ | $\alpha/\beta$ | $\alpha/\beta^2$ | Positive values, rates |
-| **Chi-squared**$(k)$ | $x^{k/2-1}e^{-x/2}$ | $k$ | $2k$ | Hypothesis testing |
-| **t**$(k)$ | $(1+x^2/k)^{-(k+1)/2}$ | $0$ | $k/(k-2)$ | Small-sample inference |
-| **F**$(d_1,d_2)$ | Complex ratio | $d_2/(d_2-2)$ | Complex | ANOVA, regression tests |
-| **Dirac**$(\mu)$ | $\delta(x-\mu)$ | $\mu$ | $0$ | Empirical distribution |
-| **MVN**$(\boldsymbol{\mu},\boldsymbol{\Sigma})$ | $\exp(-\frac{1}{2}(\mathbf{x}-\boldsymbol{\mu})^T\boldsymbol{\Sigma}^{-1}(\mathbf{x}-\boldsymbol{\mu}))$ | $\boldsymbol{\mu}$ | $\boldsymbol{\Sigma}$ | Multivariate data, PCA, GPs |
+![Comparing Continuous Distributions](./continuous_comparisons.png)
+
+<details>
+<summary>Python Code for Visualization</summary>
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+fig.suptitle('Visual Guide: Comparing Similar Continuous Distributions', fontsize=16, fontweight='bold')
+
+# --- 1. Symmetric Data [-inf, +inf] ---
+ax = axes[0, 0]
+x = np.linspace(-5, 5, 400)
+ax.plot(x, stats.norm.pdf(x), 'k-', linewidth=2.5, label='Normal (Standard)')
+ax.plot(x, stats.t.pdf(x, df=2), '--', color='#ff6b6b', linewidth=2.5, label='t-dist (df=2, heavy tails)')
+ax.fill_between(x, stats.t.pdf(x, df=2), alpha=0.1, color='#ff6b6b')
+ax.set_title('1. Symmetric Data\nNormal vs. t-Distribution', fontsize=12)
+ax.legend()
+
+# --- 2. Positive / Right-Skewed Data [0, +inf] ---
+ax = axes[0, 1]
+x2 = np.linspace(0.01, 5, 400)
+ax.plot(x2, stats.expon.pdf(x2, scale=1), color='#4a90d9', linewidth=2.5, label='Exponential (Strict decay)')
+ax.plot(x2, stats.lognorm.pdf(x2, s=0.7), color='#ffa500', linewidth=2.5, label='Log-Normal (Peak > 0, long tail)')
+ax.plot(x2, stats.gamma.pdf(x2, a=2, scale=0.5), color='#50c878', linewidth=2.5, label='Gamma (Flexible peak)')
+ax.set_title('2. Positive & Skewed Data\nExponential vs Log-Normal vs Gamma', fontsize=12)
+ax.set_ylim(0, 1.2)
+ax.legend()
+
+# --- 3. Bounded Data [0, 1] ---
+ax = axes[1, 0]
+x3 = np.linspace(0, 1, 400)
+ax.plot(x3, stats.uniform.pdf(x3), 'k--', linewidth=2, label='Uniform (No info)')
+ax.plot(x3, stats.beta.pdf(x3, 2, 5), color='#9370db', linewidth=2.5, label='Beta(2,5) (Right-skewed constraint)')
+ax.fill_between(x3, stats.beta.pdf(x3, 2, 5), alpha=0.2, color='#9370db')
+ax.set_title('3. Bounded Data (e.g. Probabilities)\nUniform vs Beta', fontsize=12)
+ax.set_ylim(0, 3)
+ax.legend()
+
+# --- 4. Test Statistics [0, +inf] ---
+ax = axes[1, 1]
+x4 = np.linspace(0.01, 8, 400)
+ax.plot(x4, stats.chi2.pdf(x4, df=3), color='#ff6b6b', linewidth=2.5, label='Chi-squared (df=3, sum of squares)')
+ax.plot(x4, stats.f.pdf(x4, dfn=5, dfd=20), '--', color='#4a90d9', linewidth=2.5, label='F-dist (df1=5, df2=20, ratio of vars)')
+ax.set_title('4. Reference Test Statistics\nChi-squared vs F-Distribution', fontsize=12)
+ax.set_ylim(0, 0.8)
+ax.legend()
+
+plt.tight_layout()
+plt.savefig('continuous_comparisons.png', dpi=150, bbox_inches='tight')
+plt.show()
+```
+
+</details>
+
+#### Quick-Reference Review: Continuous Distributions
+
+Cover the right columns and try to recall from the name alone.
+
+| Distribution | What does it model? | Key insight / ML Connection | Interview Trigger Phrase |
+|---|---|---|---|
+| **Normal** | Default for real-valued data | Minimizing MSE $\iff$ Maximizing Normal likelihood | "Central Limit Theorem" or "MSE" |
+| **Log-Normal** | Positive, right-skewed data | It's a Normal hiding behind an exponential | "Prices", "salaries", "long tail" |
+| **Exponential** | Wait times | It's the continuous memoryless distribution | "Time until event" |
+| **Uniform** | Equal probability | Maximum ignorance; used for random search | "Hyperparameter tuning" |
+| **Beta** | Probabilities (0 to 1) | Conjugate prior for Binomial (A/B testing) | "Thompson Sampling" or "CTR prior" |
+| **Multivariate N.**| Correlated vectors | Covariance matrix eigenvectors $\iff$ PCA | "PCA" or "Gaussian Process" |
+| **t-distribution** | Small sample means | Heavier tails = robust to outliers | "regression p-value" or "$n < 30$" |
+| **Chi-squared**  | Sum of squared Normals | Used to test independence of categories | "categorical feature selection" |
+| **F-distribution** | Ratio of variances | Compares models: "Did these features help?" | "ANOVA" or "nested models" |
 
 ---
 
@@ -1615,18 +2063,18 @@ Equivalently: $\bar{X}_n \approx \mathcal{N}\left(\mu, \frac{\sigma^2}{n}\right)
 
 ```mermaid
 flowchart LR
-    subgraph individual["Individual observations"]
+    subgraph population["Original Population Distribution"]
         I1["Can be ANY shape:<br/>skewed, bimodal,<br/>uniform, etc."]
     end
     
-    subgraph averaging["Average of n observations"]
-        A1["n = 1<br/>Original shape"]
-        A2["n = 5<br/>Starting to smooth"]
-        A3["n = 30<br/>Looks Normal!"]
-        A4["n = 100<br/>Very Normal"]
+    subgraph averaging["Sampling Distribution of the Mean"]
+        A1["n = 1<br/>(Looks like population)"]
+        A2["n = 5<br/>(Starting to smooth)"]
+        A3["n = 30<br/>(Looks formally Normal!)"]
+        A4["n = 100<br/>(Very Normal, tighter)"]
     end
     
-    individual -->|"Take averages<br/>of size n"| averaging
+    population -->|"Draw samples of size n<br/>and plot their MEANS"| averaging
     A1 --> A2 --> A3 --> A4
     
     style I1 fill:#ff6b6b,stroke:#333,color:#fff
@@ -1636,7 +2084,59 @@ flowchart LR
 
 **Why it works (intuition, not proof)**: When you average $n$ values, extreme values in one direction tend to cancel with extreme values in the other direction. With more values to average, this cancellation becomes more complete, and what's left is the bell-shaped "residual" — the Normal distribution. The variance shrinks by $1/n$ because with more values, there's more cancellation.
 
+#### Real-World Experiment: The Phenomena vs. The Sample Mean
+
+To make the difference between an individual observation and an average concrete, consider wait times at a coffee shop that follow an **Exponential distribution** with a mean of 5 minutes.
+
+- **The Phenomena (Individual Observations):** If you track 10,000 individual customers, the distribution is extremely right-skewed. Many wait 1 minute, some wait 20 minutes. It looks nothing like a bell curve.
+- **The Sample Mean:** If you track 10,000 *days*, and calculate the average wait time of 30 customers each day, the distribution of those daily averages is a incredibly tight **Normal curve** perfectly centered at 5 minutes.
+
+![CLT Individual vs Average](./clt_individual_vs_average.png)
+
+<details>
+<summary>Python Code for Experiment</summary>
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(42)
+
+# 1. Simulate 10,000 INDIVIDUAL customers (The Phenomena Distribution)
+individual_waits = np.random.exponential(scale=5, size=10000)
+
+# 2. Simulate 10,000 DAYS, taking the AVERAGE of 30 customers per day (Sample Mean Distribution)
+daily_averages = [np.random.exponential(scale=5, size=30).mean() for _ in range(10000)]
+
+plt.figure(figsize=(10, 6))
+
+# Plot Individual Observations
+plt.hist(individual_waits, bins=50, density=True, alpha=0.5, color='#ff6b6b', 
+         label=f'Individual Customers (n=1)\nMean: {individual_waits.mean():.2f}, Variance: {individual_waits.var():.2f}\n(Exponential shape)')
+
+# Plot Sample Means
+plt.hist(daily_averages, bins=50, density=True, alpha=0.8, color='#4a90d9', 
+         label=f'Daily Averages (n=30)\nMean: {np.mean(daily_averages):.2f}, Variance: {np.var(daily_averages):.2f}\n(Normal shape, tighter!)')
+
+plt.axvline(5, color='black', linestyle='dashed', linewidth=2, label='True Mean (5)')
+
+plt.title('CLT in Action: Individual Phenomena vs. Sample Mean', fontsize=14, fontweight='bold')
+plt.xlabel('Wait Time (Minutes)')
+plt.ylabel('Density')
+plt.xlim(0, 20)
+plt.legend()
+plt.tight_layout()
+plt.savefig('clt_individual_vs_average.png', dpi=150)
+plt.show()
+```
+
+</details>
+
 #### Python: CLT Convergence Visualization
+
+**In the grid below:**
+- **Blue Bars ($\color{#4a90d9}{\blacksquare}$)**: The actual observed empirical data (simulated sample means).
+- **Solid Red Line ($\color{#ff6b6b}{—}$)**: The perfect mathematical shape (the theoretical Normal curve). Notice how the messy blue empirical data progressively matches the perfect red theoretical curve as $n$ grows.
 
 ![Clt Convergence](./clt_convergence.png)
 
@@ -1795,6 +2295,15 @@ plt.show()
 Approximates the distribution of a *function* of a random variable.
 
 **Why learn this**: Many business metrics are ratios: revenue per user, clicks per impression, cost per acquisition. You can't just use the standard SE formula for these. The Delta Method gives you analytical standard errors for ratio metrics — critical for A/B testing at scale where bootstrapping is too slow.
+
+> [!IMPORTANT]
+> **Common Interview Question: If the CLT says the sample mean converges to a Normal distribution, why do we need the Delta Method at all?**
+>
+> **The Answer:** You are 100% correct that the CLT guarantees your ratio metric ($R = \bar{X}/\bar{Y}$) will be approximately Normal when the sample size is large. 
+> 
+> However, to actually run an A/B test (like a Z-test or t-test), knowing the *shape* is Normal isn't enough. You must calculate the **Standard Error (variance)** of that Normal curve to get a p-value: $Z = \frac{R_{\text{treat}} - R_{\text{control}}}{\sqrt{SE_{\text{treat}}^2 + SE_{\text{control}}^2}}$.
+>
+> The CLT doesn't magically provide the formula for the variance of a ratio. You absolutely cannot just divide $\text{Var}(X) / \text{Var}(Y)$. The **Delta Method** is the mathematical tool used to *approximate the variance* of a function of random variables so that you can plug it into your CLT-justified hypothesis test!
 
 **Used directly in**:
 - **Ratio metric SEs in A/B testing**: revenue per user = total_revenue / total_users is a ratio — the Delta Method gives you $SE(\hat{R})$ analytically without bootstrapping, which is critical at scale (millions of users)
